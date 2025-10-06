@@ -1,0 +1,196 @@
+#include "grafo.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+typedef struct GraphStr {
+    int vertices;
+    int arestas;
+
+    int maxVertices;
+    Info* info;
+} GraphStr;
+
+typedef GraphStr* Graph;
+
+typedef struct InfoStr {
+    char* nome;
+    Lista* listaAdj;
+} InfoStr;
+
+typedef InfoStr* Info;
+
+typedef struct EdgeStr {
+    Node destino;
+    int valor;
+    Info info;
+} EdgeStr;
+
+typedef EdgeStr* Edge;
+
+bool (*procEdge)(Graph g, Edge e, int td, int tf, void* extra); // ?
+
+bool (*dfsRestarted)(Graph g, void* extra); // ?
+
+Graph createGraph(int n){
+    Graph g = (Graph)malloc(sizeof(Graph));
+
+    g->maxVertices = n;
+    g->vertices = 0;
+    g->arestas = 0;
+    g->info = (Info**)malloc(sizeof(Info) * n);
+
+    for(int i = 0; i < n; i++){
+        g->info[i] = NULL;
+    }
+
+    return g;
+}
+
+int getMaxNodes(Graph g){
+    return g->maxVertices;
+}
+
+int getTotalNodes(Graph g){
+    return g->vertices;
+}
+
+Node addNode(Graph g, const char* nome, Info info){
+    if(g->vertices >= g->maxVertices) return -1;
+    
+    strncpy(g->info[g->vertices]->nome, nome, sizeof(nome));
+    g->info[g->vertices]->listaAdj = criaLista();
+
+    return g->info[g->vertices];
+
+    g->vertices += 1;
+
+    return g->vertices - 1;
+}
+
+Node getNode(Graph g, const char* nome){
+    for(int i = 0; i <= g->vertices; i++){
+        if(g->info[i] == NULL) continue;
+        if(strcmp((const char*)g->info[i]->nome, nome) == 0) return g->info[i];
+    }
+}
+
+Info getNodeInfo(Graph g, Node node){
+    return g->info[node];
+}
+
+char* getNodeName(Graph g, Node node){
+    return g->info[node]->nome;
+}
+
+void setNodeInfo(Graph g, Node node, Info info){
+    g->info[node] = info;
+}
+
+Edge addEdge(Graph g, Node from, Node to, Info info){
+    if(g->info[from] == NULL) return NULL;
+
+    int valor = 0;
+
+    Edge edge = malloc(sizeof(Edge));
+
+    edge->destino = to;
+    edge->valor = valor;
+    edge->info = info;
+
+    inserirFim(g->info[from]->listaAdj, edge);
+    g->arestas += 1;
+
+    return edge;
+}
+
+Edge getEdge(Graph g, Node from, Node to){
+    return getItemLista(g->info[from]->listaAdj, to);
+}
+
+static void compararEdges(const void* item, const void* aux){
+    if((Edge)item == (Edge)aux) return true;
+    return false;
+}
+
+static void compararEdgeWithID(const void* item, const void* aux){
+    if(((Edge)item)->destino == *(int*)aux) return true;
+    return false;
+}
+
+Node getFromNode(Graph g, Edge e){
+    for(int i = 0; i < g->vertices; i++){
+        Edge edge = getItemListaI(g->info[i]->listaAdj, compararEdges, e);
+    
+        if(edge != NULL) return i;
+    }
+
+    return -1;
+}
+  
+Node getToNode(Graph g, Edge e){
+    for(int i = 0; i < g->vertices; i++){
+        Edge edge = getItemListaI(g->info[i]->listaAdj, compararEdges, e);
+    
+        if(edge != NULL) return edge->destino;
+    }
+
+    return -1;
+}
+
+Info getEdgeInfo(Graph g, Edge e){
+    for(int i = 0; i < g->vertices; i++){
+        Edge edge = getItemListaI(g->info[i]->listaAdj, compararEdges, e);
+    
+        if(edge != NULL) return edge->info;
+    }
+
+    return NULL;
+}
+
+void setEdgeInfo(Graph g, Edge e, Info info){
+    for(int i = 0; i < g->vertices; i++){
+        Edge edge = getItemListaI(g->info[i]->listaAdj, compararEdges, e);
+    
+        if(edge != NULL) edge->info = info;
+    }
+}
+
+void removeEdge(Graph g, Edge e){
+    for(int i = 0; i < g->vertices; i++){
+        remover(g->info[i]->listaAdj, compararEdges, e);
+    }
+}
+
+bool isAdjacent(Graph g, Node from, Node to){
+    if(getItemListaI(g->info[from]->listaAdj, &to, compararEdgeWithID) != NULL) return true;
+}
+
+void adjacentNodes(Graph g, Node node, Lista* nosAdjacentes){
+    copyLista(nosAdjacentes, g->info[node]->listaAdj);
+}
+
+void adjacentEdges(Graph g, Node node, Lista* arestasAdjacentes); // Fazer lista das arestas
+
+void  getNodeNames(Graph g, Lista *nomesNodes){
+    for(int i = 0; i < g->vertices; i++){
+        inserirFim(nomesNodes, g->info[i]->nome);
+    }
+}
+
+void getEdges(Graph g, Lista* arestas){ // Fazer lista de arestas
+
+}
+
+//bool dfs(Graph g, Node node, procEdge *treeEdge, forwardEdge, returnEdge, crossEdge, newTree, void *extra); // ??
+
+//bool bfs(Graph g, Node node, discoverNode, void *extra); // ??
+
+void killDG(Graph g){
+    for(int i = 0; i < g->maxVertices; i++){
+        limparLista(g->info[i]->listaAdj, true);
+        free(g->info[i]);
+    }
+
+    free(g->info);
+}
