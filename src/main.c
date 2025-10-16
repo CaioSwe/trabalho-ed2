@@ -3,8 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <raylib.h>
 #include "lista.h"
+#include "svg.h"
+#include "geo.h"
 
 typedef enum GEOs {
     ENTRADA,
@@ -13,15 +14,6 @@ typedef enum GEOs {
     QUERY,
     VIA
 } GEOs;
-
-typedef struct Info{
-    char* id;
-
-    Rectangle rec;
-    char* sw;
-    char* cfill;
-    char* cstrk;
-}Info;
 
 /////////////// GRAFO DE PLACEHOLDER
 
@@ -53,20 +45,17 @@ typedef struct Grafo{
 
 ///////////////
 
-void printToSVG(const void* item, const void* aux){
-    Info* info = (Info*)item;
-    FILE* arquivo = (FILE*)aux;
-    fprintf(arquivo, "<rect width=\"%.1f\" height=\"%.1f\" x=\"%.1f\" y=\"%.1f\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%s\" />\n", info->rec.width, info->rec.height, info->rec.x, info->rec.y, info->cfill, info->cstrk, info->sw);
-}
-
 float maxX = 0;
 float maxY = 0;
 
 void getMax(const void* item){
-    Rectangle* rec = (Rectangle*)item;
+    // Abusando um pouco da função de mudar extensão :)
+    // A função atoi() converte uma string em um inteiro equivalente.
+    float itemW = getQuadraX(item) + getQuadraWidth(item) + atoi(changeExtension(getQuadraSW(item), "")) + 1;
+    float itemH = getQuadraY(item) + getQuadraHeight(item) + atoi(changeExtension(getQuadraSW(item), "")) + 1;
 
-    if(rec->x + rec->width > maxX) maxX = rec->x + rec->width;
-    if(rec->y + rec->height > maxY) maxY = rec->y + rec->height;
+    if(itemW > maxX) maxX = itemW;
+    if(itemH > maxY) maxY = itemH;
 }
 
 int main(int argc, char* argv[]){
@@ -78,12 +67,14 @@ int main(int argc, char* argv[]){
         paths[i] = NULL;
     }
 
-    // Pega todos os nomes e GEOs dos arquivos base e organiza na variável paths
-    // paths[0] = entrada (absoluto ou relativo) (opcional)
-    // paths[1] = saida (absoluto ou relativo)
-    // paths[2] = GEO
-    // paths[3] = query (opcional)
-    // paths[4] = VIA (opcional)
+    /*
+        Pega todos os nomes e GEOs dos arquivos base e organiza na variável paths
+        paths[0] = entrada (opcional)
+        paths[1] = saida (obrigatório)
+        paths[2] = GEO (obrigatório)
+        paths[3] = query (opcional)
+        paths[4] = VIA (opcional)
+    */
     for(int i = 1; i < argc; i += 2){
         for(int j = 0; j < 5; j++){
             if(strcmp(argv[i], flags[j]) == 0){
@@ -102,17 +93,11 @@ int main(int argc, char* argv[]){
     }
 
     // Caso o path de saída seja nulo (não fornecido), é escolhido o diretório corrente (./)
-    if(!paths[SAIDA]){
-        free(paths[SAIDA]);
-        paths[SAIDA] = (char*)malloc(sizeof(char) * strlen("./"));
-        strcpy(paths[SAIDA], "./");
+    if(!paths[SAIDA] || !paths[GEO]){
+        printf("\n- main() -> Erro na passagem de parâmetros obrigatórios: arquivo .geo ou caminho de saída não especificado. -");
+        return 1;
     }
     
-    printf("\nEntrada: %s", paths[ENTRADA]);
-    printf("\nSaida: %s", paths[SAIDA]);
-    printf("\nArquivo Geo: %s", paths[GEO]);
-    printf("\nQuery: %s", paths[QUERY]);
-
     // Coloca '/' caso não tenha no final do path de entrada
     if(paths[ENTRADA][strlen(paths[ENTRADA]) - 1] != '/'){
         strncat(paths[ENTRADA], "/", (size_t)(paths[ENTRADA] + 1));
@@ -122,58 +107,24 @@ int main(int argc, char* argv[]){
 
     // Coloca ".geo" no arquivo geo caso não tenha
     strcpy(paths[GEO], changeExtension(paths[GEO], ".geo"));
-    
 
-    // (2) Utilizando o .geo
+    // Coloca ".via" no arquivo via caso ele exista e não tenha
+    if(paths[VIA]) strcpy(paths[VIA], changeExtension(paths[GEO], ".via"));
+    
+    // Todos os parâmetros fornecidos:
+    printf("\nEntrada: %s", paths[ENTRADA]);
+    printf("\nSaida: %s", paths[SAIDA]);
+    printf("\nArquivo Geo: %s", paths[GEO]);
+    printf("\nQuery: %s", paths[QUERY]);
+    printf("\nArquivo Via: %s", paths[VIA]);
+
+    // (2) Lendo o arquivo .geo
     ////////////////////////////////////////
 
     // Concatena o path de entrada e o nome do arquivo GEO para fEntradaPath
     const char* fEntradaPath = strcatcat(paths[ENTRADA], paths[GEO]);
 
-    // Abre o arquivo de entrada no modo de leitura
-    FILE* fEntrada = fopen(fEntradaPath, "r");
-    printf("Lendo arquivo: %s\n", fEntradaPath);
-
-    // Variáveis de operação, ID da quadra e posição, respectivamente.
-    char op[256];
-    char quadraID[256];
-    Rectangle posQuadra;
-
-    // Variáveis de espessura da borda, cor de preenchimento e borda, respectivamente.
-    char sw[256];
-    char cfill[256];
-    char cstrk[256];
-
-    // Lista genérica das formas lidas no arquivo .geo
-    Lista* formas = criaLista();
-
-    while(fscanf(fEntrada, "%s", op) > 0){
-        if(strcmp(op, "cq") == 0){
-            fscanf(fEntrada, "%s %s %s\n", sw, cfill, cstrk);
-        }
-        else if(strcmp(op, "q") == 0){
-            fscanf(fEntrada, "%s %f %f %f %f\n", quadraID, &posQuadra.x, &posQuadra.y, &posQuadra.width, &posQuadra.height);
-            
-            Info* info = (Info*)malloc(sizeof(Info));
-            
-            //info->id = quadraID;
-
-            info->rec.x = posQuadra.x;
-            info->rec.y = posQuadra.y;
-            info->rec.width = posQuadra.width;
-            info->rec.height = posQuadra.height;
-
-            info->cfill = cfill;
-            info->sw = sw;
-            info->cstrk = cstrk;
-
-            inserirFim(formas, info);
-        }
-    }
-
-    printf("\n");
-
-    fclose(fEntrada);
+    Lista formas = processGeoFile(fEntradaPath);
 
     // (3) Abre um arquivo .svg e coloca as formas adiquiridas
     /////////////////////////////////////////

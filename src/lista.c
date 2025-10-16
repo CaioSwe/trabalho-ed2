@@ -16,14 +16,30 @@ typedef struct Lista{
 
 Lista criaLista(){
     listaStr* l = (listaStr*)malloc(sizeof(listaStr));
+    if(l == NULL){
+        printf("\n- criaLista() -> Erro na alocação de memória da lista. -");
+        return NULL;
+    }
+
     l->inicio = NULL;
     l->fim = NULL;
     l->tamanho = 0;
     return l;
 }
 
+Celula* criaCelula(){
+    Celula* celula = (Celula*)malloc(sizeof(Celula));
+
+    if(celula == NULL){
+        printf("\n- criaCelula() -> Erro na alocação de memória da célula. -");
+        return NULL;
+    }
+
+    return celula;
+}
+
 void inserirInicio(Lista l, void* v){
-    Celula* nova = (Celula*)malloc(sizeof(Celula));
+    Celula* nova = criaCelula();
     nova->item = v;
 
     listaStr* lista = (listaStr*)l;
@@ -45,7 +61,7 @@ void inserirInicio(Lista l, void* v){
 }
 
 void inserirFim(Lista l, void* v){
-    Celula* nova = malloc(sizeof(Celula));
+    Celula* nova = criaCelula();
     nova->item = v;
 
     listaStr* lista = (listaStr*)l;
