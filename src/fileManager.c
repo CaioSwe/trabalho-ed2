@@ -32,7 +32,7 @@ const char* trimString(const char* string, int n){
 
     // Caso o inteiro N for maior que o tamanho da string fornecida, imprime mensagem de aviso e retorna NULO.
     if(n > stringSize){
-        printf("\n- trimString() -> Valor dado eh maior que a string dada: (%s) > (%d) -\n", stringSize, n);
+        printf("\n- trimString() -> Valor dado eh maior que a string dada: (%d) > (%d) -\n", stringSize, n);
         return NULL;
     }
     

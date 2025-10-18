@@ -233,14 +233,14 @@ void getEdges(Graph g, Lista arestas){
 //bool bfs(Graph g, Node node, discoverNode, void *extra);
 
 void killDG(Graph g){
-    GraphStr* graph = (GraphStr*)g;
+    // GraphStr* graph = (GraphStr*)g;
 
-    for(int i = 0; i < graph->nVert; i++){
-        free(graph->vertices);
-        limparLista(graph->listaAdj[i], true);
-    }
-    destroiHash(graph->tabelaHash);
-    free(graph);
+    // for(int i = 0; i < graph->nVert; i++){
+    //     free(graph->vertices);
+    //     limparLista(graph->listaAdj[i], true);
+    // }
+    // destroiHash(graph->tabelaHash);
+    // free(graph);
 }
 
 void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*), void* aux){

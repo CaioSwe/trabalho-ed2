@@ -3,7 +3,7 @@ PROJ_NAME = ted
 CC = gcc
 CFLAGS = -g -O0 -std=c99 -fstack-protector-all -Werror=implicit-function-declaration -Wall
 LDFLAGS = 
-LIBS = -lm -lssp
+LIBS = -lm
 SRCS = main.c lista.c fileManager.c geo.c files.c digraph.c hash.c via.c # digraph.c hash.c priority_queue.c fila.c streap.c utils.c via.c geo.c svg.c qry.c
 
 OBJETOS = $(SRCS:.c=.o)
@@ -35,8 +35,5 @@ via.o: via.c via.h
 
 main.o: main.c lista.h fileManager.h geo.h files.h digraph.h via.h # utils.h via.h digraph.h lista.h geo.h svg.h qry.h
 
-# clean:
-# 	rm -f $(OBJETOS) $(PROJ_NAME)
-
 clean:
-	del /f /q main.o lista.o fileManager.o geo.o files.o digraph.o hash.o via.o ted 2>nul || true
+	rm -f $(OBJETOS) $(PROJ_NAME)

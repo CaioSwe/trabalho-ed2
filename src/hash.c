@@ -66,14 +66,17 @@ void inserirHash(Hash hash, const char* nome, int valor){
     int i = hashIndex(nome, tabelaHash->tam);
     
     HashCel* hashCel = tabelaHash->balde[i];
-
+    
+    // Checa caso a chave esteja presente nas próximas casas da hashTable.
     for(; hashCel != NULL; hashCel = hashCel->prox){
+        // Atualiza o valor da chave se encontrar a chave na estrutura.
         if(strcmp(hashCel->chave, nome) == 0){
             hashCel->valor = valor;
             return;
         }
     }
     
+    // Caso não esteja, aloca uma nova célula da tabela na posição hashIndex.
     HashCel* newHashCel = (HashCel*)malloc(sizeof(HashCel));
     newHashCel->chave = (char*)malloc(strlen(nome) + 1);
 
