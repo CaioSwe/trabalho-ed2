@@ -20,10 +20,10 @@
     A documentacao deste modulo deve ser melhorada.
 */
 
-typedef void *Graph;
+typedef void* Graph;
 typedef int Node;
-typedef void *Edge;
-typedef void *Info;
+typedef void* Edge;
+typedef void* Info;
 
 /*
     Invocado quando uma aresta é "descoberta"/"percorrida"/"classificada". 
@@ -155,5 +155,9 @@ void getEdges(Graph g, Lista arestas);
     Destroi o grafo g.
 */
 void killDG(Graph g);
+
+void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*), void* aux);
+
+void getAllVerticesInfo(Graph g, Lista allVertices);
 
 #endif

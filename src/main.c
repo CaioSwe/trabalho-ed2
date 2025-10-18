@@ -4,8 +4,10 @@
 #include <string.h>
 
 #include "lista.h"
-#include "svg.h"
+#include "files.h"
 #include "geo.h"
+#include "digraph.h"
+#include "via.h"
 
 typedef enum GEOs {
     ENTRADA,
@@ -14,34 +16,6 @@ typedef enum GEOs {
     QUERY,
     VIA
 } GEOs;
-
-/////////////// GRAFO DE PLACEHOLDER
-
-typedef struct Vertices{
-    int id;
-    double x, y;
-} Vertices;
-
-typedef struct Arestas{
-    char* nome;
-    
-    char* ldir, lesq;
-
-    double cmp;
-    double vm;
-}Arestas;
-
-typedef struct Grafo{
-    int nVertices;
-    int nArestas;
-
-    int maxVertices;
-    
-    Vertices* vertices;
-    Arestas* arestas;
-
-    Lista* adjacencia;
-}Grafo;
 
 ///////////////
 
@@ -60,12 +34,7 @@ void getMax(const void* item){
 
 int main(int argc, char* argv[]){
     char* flags[5] = {"-e", "-o", "-f", "-q", "-v"};
-    char** paths = (char**)malloc(sizeof(char*) * 5);
-
-    for(int i = 0; i < 5; i++){
-        paths[i] = (char*)malloc(sizeof(char));
-        paths[i] = NULL;
-    }
+    char** paths = calloc(5, sizeof(char*));
 
     /*
         Pega todos os nomes e GEOs dos arquivos base e organiza na variável paths
@@ -79,8 +48,8 @@ int main(int argc, char* argv[]){
         for(int j = 0; j < 5; j++){
             if(strcmp(argv[i], flags[j]) == 0){
                 free(paths[j]);
-                paths[j] = (char*)malloc(sizeof(char) * strlen(argv[i + 1]));
-                strcpy(paths[j], (const char*)argv[i + 1]);
+                paths[j] = malloc(strlen(argv[i + 1]) + 1);
+                strcpy(paths[j], argv[i + 1]);
             }
         }
     }
@@ -88,7 +57,7 @@ int main(int argc, char* argv[]){
     // Caso a entrada não for especificado, usa o diretório atual
     if(paths[ENTRADA] == NULL){
         free(paths[ENTRADA]);
-        paths[ENTRADA] = (char*)malloc(sizeof(char) * strlen("./"));
+        paths[ENTRADA] = (char*)malloc(sizeof(char) * (strlen("./") + 1));
         strcpy(paths[ENTRADA], "./");
     }
 
@@ -100,16 +69,25 @@ int main(int argc, char* argv[]){
     
     // Coloca '/' caso não tenha no final do path de entrada
     if(paths[ENTRADA][strlen(paths[ENTRADA]) - 1] != '/'){
-        strncat(paths[ENTRADA], "/", (size_t)(paths[ENTRADA] + 1));
+        size_t len = strlen(paths[ENTRADA]);
+        paths[ENTRADA] = realloc(paths[ENTRADA], len + 2);
+        strcat(paths[ENTRADA], "/");
     }
 
     printf("\n\n");
 
     // Coloca ".geo" no arquivo geo caso não tenha
-    strcpy(paths[GEO], changeExtension(paths[GEO], ".geo"));
+    char* newPathGeo = (char*)changeExtension(paths[GEO], ".geo");
+    free(paths[GEO]);
+    paths[GEO] = newPathGeo;
 
     // Coloca ".via" no arquivo via caso ele exista e não tenha
-    if(paths[VIA]) strcpy(paths[VIA], changeExtension(paths[GEO], ".via"));
+    if (paths[VIA]) {
+        char* newPathVia = (char*)changeExtension(paths[VIA], ".via");
+        free(paths[VIA]);
+        paths[VIA] = newPathVia;
+    }
+
     
     // Todos os parâmetros fornecidos:
     printf("\nEntrada: %s", paths[ENTRADA]);
@@ -126,7 +104,39 @@ int main(int argc, char* argv[]){
 
     Lista formas = processGeoFile(fEntradaPath);
 
-    // (3) Abre um arquivo .svg e coloca as formas adiquiridas
+    // (3) Lendo o arquivo .via (se tiver)
+    /////////////////////////////////////////////////////////////////
+
+    Lista vertices = NULL;
+
+    if(paths[VIA]){
+        // Concatena o path de entrada e o nome do arquivo VIA para fViaPAth
+        const char* fViaPath = strcatcat(paths[ENTRADA], paths[VIA]);
+
+        // Guarda as informações do arquivo .via em um grafo direcionado.
+        Graph grafo;
+        grafo = processViaFile(fViaPath);
+
+        // Inicializa uma lista dos vertices do grafo G para visualização no SVG (opcional)
+        vertices = criaLista();
+        getAllVerticesInfo(grafo, vertices);
+
+        // (3.1) Escreve a lista de adjacência de G em um TXT [v -> e]
+        /////////////////////////////////////////
+
+        // Concatena o diretório de saída com o nome do arquivo .via em formato .txt
+        const char* fOutputViaPath = strcatcat(paths[SAIDA], changeExtension(paths[VIA], ".txt"));
+
+        // Abre o diretório em modo de escrita
+        FILE* fViaSaida = fopen(fOutputViaPath, "w");
+        printf("Escrevendo no arquivo: %s\n", fOutputViaPath);
+
+        percorrerGrafoRel(grafo, printToTXT, fViaSaida);
+
+        fclose(fViaSaida);
+    }
+
+    // (4) Abre um arquivo .svg e coloca as formas adiquiridas do arquivo .geo
     /////////////////////////////////////////
 
     // Concatena o diretório de saída com o nome do arquivo .geo em formato .svg
@@ -138,8 +148,10 @@ int main(int argc, char* argv[]){
 
     percorrerLista(formas, getMax);
 
-    fprintf(fSaida, "<svg width=\"%.1f\" height=\"%.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX, maxY);
-    percorrerListaRel(formas, printToSVG, fSaida);
+    fprintf(fSaida, "<svg width=\"%.1f\" height=\"%.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX + 500, maxY + 500);
+    percorrerListaRel(formas, printQuadrasToSVG, fSaida);
+    // Tire de comentário caso queria visualizar os vertices do grafo produzido pelo arquivo .via
+    //percorrerListaRel(vertices, printVerticesToSVG, fSaida);
     fprintf(fSaida, "</svg>");
 
     fclose(fSaida);

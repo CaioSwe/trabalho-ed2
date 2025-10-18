@@ -1,6 +1,8 @@
 #include "lista.h"
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
+
+// CONSERTAR ORDEM DOS PARAMETROS DAS FUNÇÕES DE CALLBACK (inconsistente)
 
 typedef struct cel{
     void* item;
@@ -110,6 +112,9 @@ void* removerFim(Lista l){
 
     lista->fim = lista->fim->ant;
 
+    if (lista->fim) lista->fim->prox = NULL;
+    else lista->inicio = NULL;
+    
     free(cel);
 
     lista->tamanho -= 1;
@@ -123,23 +128,40 @@ void* remover(Lista l, bool(*f)(const void*, const void*), const void* item){
     if (!lista) return NULL;
 
     Celula* cel = lista->inicio;
-    Celula* aux = NULL;
 
     if(f(cel->item, item)){
-        lista->tamanho -= 1;
         lista->inicio = cel->prox;
-        return cel->item;
+
+        if (lista->inicio) lista->inicio->ant = NULL;
+        else lista->fim = NULL;
+        
+        void* itemV = cel->item;
+        
+        free(cel);
+        lista->tamanho -= 1;
+        
+        return itemV;
     }
 
     while(cel->prox != NULL){
         if(f(cel->prox->item, item)){
-            lista->tamanho -= 1;
-            aux = cel->prox;
-            cel->prox = cel->prox->prox;
-            return aux->item;
+            Celula* toRemove = cel->prox;
+            cel->prox = toRemove->prox;
+
+            if(toRemove->prox) toRemove->prox->ant = cel;
+            else lista->fim = cel;
+
+            void* ret = toRemove->item;
+            
+            free(toRemove);
+            
+            lista->tamanho--;
+            
+            return ret;
         }
         cel = cel->prox;
     }
+
 
     return NULL;
 }
@@ -198,7 +220,7 @@ bool isInLista(Lista l, bool(*f)(const void*, const void*), const void* valor) {
 void* getItemLista(Lista l, int pos){
     listaStr* lista = (listaStr*)l;
 
-    if (!lista || lista->tamanho < pos) return NULL;
+    if (!lista || pos < 0 || pos >= lista->tamanho) return NULL;
 
     Celula* cel = lista->inicio;
 
@@ -212,7 +234,7 @@ void* getItemLista(Lista l, int pos){
 void* getItemListaI(Lista l, void* element, bool(*f)(const void*, const void*)){
     listaStr* lista = (listaStr*)l;
 
-    if (!lista) return false;
+    if (!lista) return NULL;
 
     Celula* cel = lista->inicio;
     
@@ -223,6 +245,41 @@ void* getItemListaI(Lista l, void* element, bool(*f)(const void*, const void*)){
         cel = cel->prox;
     }
     return NULL;
+}
+
+void mapTo(Lista from, Lista to, void* (*mapFunction)(const void*)){
+    listaStr* listaFrom = (listaStr*)from;
+    listaStr* listaTo = (listaStr*)to;
+
+    if (!listaFrom || !listaTo) return;
+
+    limparLista(listaTo, false);
+
+    Celula* cel = listaFrom->inicio;
+    
+    while(cel != NULL){
+        inserirFim(listaTo, mapFunction(cel->item));
+        cel = cel->prox;
+    }
+}
+
+void concatLista(Lista receive, Lista concatFrom, size_t itemSize){
+    listaStr* listaR = (listaStr*)receive;
+    listaStr* listaCF = (listaStr*)concatFrom;
+
+    if(!listaR || !listaCF) return;
+
+    if(listaR->inicio == NULL) copyLista(concatFrom, receive, itemSize);
+
+    Celula* atual = listaCF->inicio;
+
+    while (atual != NULL) {
+        void* newItem = malloc(itemSize);
+        memcpy(newItem, atual->item, itemSize);
+        inserirFim(listaR, newItem);
+
+        atual = atual->prox;
+    }
 }
 
 void imprimirLista(Lista l, void(*imprimir)(const void*)){
@@ -256,13 +313,19 @@ void limparLista(Lista l, bool freeItems) {
     lista->tamanho = 0;
 }
 
-void copyLista(Lista f, Lista t){
+void copyLista(Lista f, Lista t, size_t itemSize){
     listaStr* from = (listaStr*)f;
     listaStr* to = (listaStr*)t;
 
     limparLista(to, false);
 
-    to->inicio = from->inicio;
-    to->fim = from->fim;
-    to->tamanho = from->tamanho;
+    Celula* atual = from->inicio;
+
+    while (atual != NULL) {
+        void* newItem = malloc(itemSize);
+        memcpy(newItem, atual->item, itemSize);
+        inserirFim(to, newItem);
+
+        atual = atual->prox;
+    }
 }

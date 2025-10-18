@@ -2,6 +2,7 @@
 #define _Lista_h_
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 typedef void* Lista;
 
@@ -25,6 +26,10 @@ bool isListaVazia(Lista);
 
 int listaTamanho(Lista);
 
+void mapTo(Lista from, Lista to, void* (*mapFunction)(const void*));
+
+void concatLista(Lista receive, Lista concatFrom, size_t itemSize);
+
 void imprimirLista(Lista, void(*imprimir)(const void*));
 
 //void imprimirListaRel(Lista, void*, void(*imprimir)(const void*, const void*));
@@ -45,6 +50,6 @@ void* getItemListaI(Lista Lista, void* element, bool(*f)(const void*, const void
 
 void limparLista(Lista, bool);
 
-void copyLista(Lista from, Lista to);
+void copyLista(Lista from, Lista to, size_t itemSize);
 
 #endif

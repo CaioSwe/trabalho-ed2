@@ -4,7 +4,7 @@ CC = gcc
 CFLAGS = -g -O0 -std=c99 -fstack-protector-all -Werror=implicit-function-declaration -Wall
 LDFLAGS = 
 LIBS = -lm -lssp
-SRCS = main.c lista.c fileManager.c geo.c svg.c # digraph.c hash.c priority_queue.c fila.c streap.c utils.c via.c geo.c svg.c qry.c
+SRCS = main.c lista.c fileManager.c geo.c files.c digraph.c hash.c via.c # digraph.c hash.c priority_queue.c fila.c streap.c utils.c via.c geo.c svg.c qry.c
 
 OBJETOS = $(SRCS:.c=.o)
 
@@ -17,7 +17,10 @@ $(PROJ_NAME): $(OBJETOS)
 lista.o: lista.c lista.h
 filemanager.o: fileManager.c fileManager.h
 geo.o: geo.c geo.h
-svg.o: svg.c svg.h
+files.o: files.c files.h
+digraph.o: digraph.c digraph.h
+hash.o: hash.c hash.h
+via.o: via.c via.h
 # fila.o: fila.c fila.h
 # utils.o: utils.c utils.h
 
@@ -30,7 +33,10 @@ svg.o: svg.c svg.h
 # geo.o: geo.c geo.h lista.h
 # svg.o: svg.c svg.h digraph.h lista.h
 
-main.o: main.c lista.h fileManager.h geo.h svg.h # utils.h via.h digraph.h lista.h geo.h svg.h qry.h
+main.o: main.c lista.h fileManager.h geo.h files.h digraph.h via.h # utils.h via.h digraph.h lista.h geo.h svg.h qry.h
+
+# clean:
+# 	rm -f $(OBJETOS) $(PROJ_NAME)
 
 clean:
-	rm -f $(OBJETOS) $(PROJ_NAME)
+	del /f /q main.o lista.o fileManager.o geo.o files.o digraph.o hash.o via.o ted 2>nul || true
