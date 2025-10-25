@@ -227,10 +227,14 @@ void getEdges(Graph g, Lista arestas){
         concatLista(arestas, graph->listaAdj[i], sizeof(EdgeStr));
     }
 }
- 
-//bool dfs(Graph g, Node node, procEdge treeEdge, forwardEdge, returnEdge, crossEdge, newTree, void *extra);
 
-//bool bfs(Graph g, Node node, discoverNode, void *extra);
+/*
+    Percorre o grafo g em largura, a partir do no' node. discoverNode e' usada
+    para a aresta (x,y) usada para "descobrir" o y.
+*/
+bool bfs(Graph g, Node node, procEdge discoverNode, void *extra){
+    
+}
 
 void killDG(Graph g){
     // GraphStr* graph = (GraphStr*)g;
@@ -243,14 +247,14 @@ void killDG(Graph g){
     // free(graph);
 }
 
-void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*), void* aux){
+void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*, const void*), void* aux){
     GraphStr* graph = (GraphStr*)g;
 
     FILE* arq = (FILE*)aux;
 
     for(int i = 0; i < graph->nVert; i++){
         fprintf(arq, "(%-2d) %-25s -> ", i, graph->vertices[i].nome);
-        percorrerListaRel(graph->listaAdj[i], imprimir, aux);
+        percorrerListaRelRel(graph->listaAdj[i], imprimir, aux, graph);
         fprintf(arq, "NULL\n");
     }
 }

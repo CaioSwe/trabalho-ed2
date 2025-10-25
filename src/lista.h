@@ -40,7 +40,7 @@ void percorrerLista(Lista, void(*f)(const void*));
 
 void percorrerListaRel(Lista, void(*f)(const void*, const void*), void*);
 
-//void percorrerListaRelRel(Lista Lista, void* target, void* p, void(*f)(const void*, const void*, const void*));
+void percorrerListaRelRel(Lista, void(*f)(const void*, const void*, const void*), void*, void*);
 
 bool isInLista(Lista, bool(*f)(const void*, const void*), const void*);
 

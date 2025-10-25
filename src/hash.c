@@ -26,9 +26,7 @@ bool isPrimo(int v){
 }
 
 int proxPrimo(int v){
-    // Pega o próximo número ímpar de V
     v += (v % 2 == 0 ? 1 : 2);
-
     while(isPrimo(v) == false) v += 2;
 
     return v;
@@ -48,11 +46,12 @@ Hash criaHash(int tam, bool gerarPrimo){
     return tabelaHash;
 }
 
-static unsigned long int hashFunction(const char* nome){ // Usando djb2
+// Usando djb2
+static unsigned long int hashFunction(const char* nome){
     unsigned long hash = 5381;
 	int x;
 	
-    while((x = *nome++)) hash = ((hash<<5)+ hash) + x;
+    while((x = *nome++)) hash = ((hash << 5) + hash) + x;
 
 	return hash;
 }
@@ -101,4 +100,22 @@ int getHashValue(Hash hash, const char* nome){
     return -1;
 }
 
-void destroiHash(Hash hash);
+void destroiHash(Hash hash){
+    HashStr* tabelaHash = (HashStr*)hash;
+
+    for(int i = 0; i < tabelaHash->tam; i++){
+        HashCel* cel = tabelaHash->balde[i];
+        
+        while(cel){
+            HashCel* prox = cel->prox;
+
+            free(cel->chave);
+            free(cel);
+
+            cel = prox;
+        }
+    }
+
+    free(tabelaHash->balde);
+    free(tabelaHash);
+}

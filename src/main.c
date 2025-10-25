@@ -90,11 +90,11 @@ int main(int argc, char* argv[]){
 
     
     // Todos os parâmetros fornecidos:
-    printf("\nEntrada: %s", paths[ENTRADA]);
-    printf("\nSaida: %s", paths[SAIDA]);
-    printf("\nArquivo Geo: %s", paths[GEO]);
-    printf("\nQuery: %s", paths[QUERY]);
-    printf("\nArquivo Via: %s", paths[VIA]);
+    printf("%-12s: %s\n", "Entrada", paths[ENTRADA]);
+    printf("%-12s: %s\n", "Saida",   paths[SAIDA]);
+    printf("%-12s: %s\n", "Arquivo Geo", paths[GEO]);
+    printf("%-12s: %s\n", "Query",   paths[QUERY]);
+    printf("%-12s: %s\n", "Arquivo Via", paths[VIA]);
 
     // (2) Lendo o arquivo .geo
     ////////////////////////////////////////

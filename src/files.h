@@ -5,6 +5,6 @@ void printQuadrasToSVG(const void* item, const void* file);
 
 void printVerticesToSVG(const void* item, const void* file);
 
-void printToTXT(const void* item, const void* file);
+void printToTXT(const void* item, const void* file, const void* aux);
 
 #endif

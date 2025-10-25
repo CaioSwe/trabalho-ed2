@@ -21,11 +21,12 @@ void printVerticesToSVG(const void* item, const void* file){
     fprintf(arquivo, " <circle cx=\"%.1lf\" cy=\"%.1lf\" r=\"5\" fill=\"red\" />\n", x, y);
 }
 
-void printToTXT(const void* item, const void* file){
+void printToTXT(const void* item, const void* file, const void* aux){
     FILE* arquivo = (FILE*)file;
+    Graph g = (Graph)aux;
 
     Edge e = (Edge)item;
     Node node = getToNode(NULL, e);
 
-    fprintf(arquivo, "%-4d, ", node);
+    fprintf(arquivo, "%-20s, ", getNodeName(g, node));
 }

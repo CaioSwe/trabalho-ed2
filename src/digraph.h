@@ -29,12 +29,12 @@ typedef void* Info;
     Invocado quando uma aresta é "descoberta"/"percorrida"/"classificada". 
     Tambem informa os tempos de descoberta e finalizacao
 */
-//bool (*procEdge)(g,e,td,tf, void *extra); 
+typedef bool (*procEdge)(Graph g, Edge e, int td, int tf, void *extra);
 
 /*
     Invocado quando percurso e' recomecado
 */
-//bool (*dfsRestarted)(g, void *extra);
+typedef bool (*dfsRestarted)(Graph g, void *extra);
 
 /*
     Cria um grafo com, no maximo, "nVert" vertices.
@@ -143,20 +143,20 @@ void getEdges(Graph g, Lista arestas);
     A busca em profundidade, eventualmente, pode produzir uma floresta.
     newTree e' invocada sempre que o percurso for retomado.
 */  
-//bool dfs(Graph g, Node node, procEdge treeEdge, forwardEdge, returnEdge, crossEdge, newTree, void *extra);
+bool dfs(Graph g, Node node, procEdge treeEdge, procEdge forwardEdge, procEdge returnEdge, procEdge crossEdge, dfsRestarted newTree, void *extra);
 
 /*
     Percorre o grafo g em largura, a partir do no' node. discoverNode e' usada
     para a aresta (x,y) usada para "descobrir" o y.
 */
-//bool bfs(Graph g, Node node, discoverNode, void *extra);
+bool bfs(Graph g, Node node, procEdge discoverNode, void *extra);
 
 /*
     Destroi o grafo g.
 */
 void killDG(Graph g);
 
-void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*), void* aux);
+void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*, const void*), void* aux);
 
 void getAllVerticesInfo(Graph g, Lista allVertices);
 

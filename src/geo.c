@@ -5,7 +5,7 @@
 #include "geo.h"
 
 typedef struct QuadraStr{
-    char* id;
+    char* id; // Associação usada na tabela hash
 
     double x, y;
     double width, height;
@@ -15,7 +15,32 @@ typedef struct QuadraStr{
     char* cstrk;
 } QuadraStr;
 
-Lista processGeoFile(const char* path){
+typedef struct QuadrasStr{
+    int nQuadras;
+
+    Hash tabelaHash;
+    QuadraStr* quadras;
+} QuadrasStr;
+
+static void inserirQuadrasHash(const void* item, const void* estrutura){
+    QuadraStr* quadra = (QuadraStr*)item;
+    QuadrasStr* quadras = (QuadrasStr*)estrutura;
+
+    inserirHash(quadras->tabelaHash, quadra->id, quadras->nQuadras);
+
+    quadras->quadras[quadras->nQuadras].id = quadra->id;
+    quadras->quadras[quadras->nQuadras].x = quadra->x;
+    quadras->quadras[quadras->nQuadras].y = quadra->y;
+    quadras->quadras[quadras->nQuadras].width = quadra->width;
+    quadras->quadras[quadras->nQuadras].height = quadra->height;
+    quadras->quadras[quadras->nQuadras].sw = quadra->sw;
+    quadras->quadras[quadras->nQuadras].cfill = quadra->cfill;
+    quadras->quadras[quadras->nQuadras].cstrk = quadra->cstrk;
+    
+    quadras->nQuadras += 1;
+}
+
+Quadras processGeoFile(const char* path){
     // Checa se o caminho dado contém a extensão .geo
     if(strstr(path, ".geo") == NULL){
         printf("\n- processGeoFile() -> path: \"%s\" não é um arquivo .geo -", path);
@@ -26,6 +51,8 @@ Lista processGeoFile(const char* path){
     FILE* fEntrada = fopen(path, "r");
     printf("\nLendo arquivo: %s\n", path);
 
+    Lista lista = criaLista();
+
     // Variáveis de operação, ID da quadra e posição, respectivamente.
     char op[256];
     char id[256];
@@ -35,9 +62,6 @@ Lista processGeoFile(const char* path){
     char sw[256];
     char cfill[256];
     char cstrk[256];
-
-    // Lista genérica das formas lidas no arquivo .geo
-    Lista formas = criaLista();
 
     // Itera sobre as linhas do arquivo .geo
     while(fscanf(fEntrada, "%s", op) > 0){
@@ -64,7 +88,7 @@ Lista processGeoFile(const char* path){
             quadra->sw = malloc(sizeof(char) * strlen(sw) + 1);
             strcpy(quadra->sw, sw);
 
-            inserirFim(formas, quadra);
+            inserirFim(lista, quadra);
         }
     }
 
@@ -73,36 +97,72 @@ Lista processGeoFile(const char* path){
     // Fecha o arquivo de entrada
     fclose(fEntrada);
 
-    // Retorna a lista das formas lidas no .geo
-    return formas;
+    int nQuadras = listaTamanho(lista);
+
+    // Cria uma estrutura de quadras
+    QuadrasStr* quadras = (QuadrasStr*)malloc(sizeof(QuadrasStr));
+    quadras->nQuadras = 0;
+    quadras->tabelaHash = criaHash(nQuadras, true);
+
+    quadras->quadras = (QuadraStr*)malloc(nQuadras * sizeof(QuadraStr));
+
+    percorrerListaRel(lista, inserirQuadrasHash, quadras);
+
+    // Retorna a estrutura Quadras das quadras lidas no .geo
+    return quadras;
 }
 
 // FUNÇÕES GET
 
-double getQuadraX(const void* quadra){
+double getQuadraX(Quadra quadra){
     return ((QuadraStr*)quadra)->x;
 }
 
-double getQuadraY(const void* quadra){
+double getQuadraY(Quadra quadra){
     return ((QuadraStr*)quadra)->y;
 }
 
-double getQuadraWidth(const void* quadra){
+double getQuadraWidth(Quadra quadra){
     return ((QuadraStr*)quadra)->width;
 }
 
-double getQuadraHeight(const void* quadra){
+double getQuadraHeight(Quadra quadra){
     return ((QuadraStr*)quadra)->height;
 }
 
-const char* getQuadraCFill(const void* quadra){
+const char* getQuadraCFill(Quadra quadra){
     return ((QuadraStr*)quadra)->cfill;
 }
 
-const char* getQuadraCStrk(const void* quadra){
+const char* getQuadraCStrk(Quadra quadra){
     return ((QuadraStr*)quadra)->cstrk;
-};
+}
 
-const char* getQuadraSW(const void* quadra){
+const char* getQuadraSW(Quadra quadra){
     return ((QuadraStr*)quadra)->sw;
+}
+
+Quadra getQuadraByID(Quadras quadras, const char* id){
+    QuadrasStr* qs = (QuadrasStr*)quadras;
+
+    int index = (int)getHashValue(qs->tabelaHash, id);
+    if(index == -1) return NULL;
+
+    return &(qs->quadras[index]);
+}
+
+void setQuadraCFill(Quadra quadra, const char* cfill){
+    QuadraStr* q = (QuadraStr*)quadra;
+
+    free(q->cfill);
+    q->cfill = malloc(sizeof(char) * (strlen(cfill) + 1));
+    strcpy(q->cfill, cfill);
+}
+
+void setQuadraCStrk(Quadra quadra, const char* cstrk){
+    QuadraStr* q = (QuadraStr*)quadra;
+
+    free(q->cstrk);
+    q->cstrk = malloc(sizeof(char) * (strlen(cstrk) + 1));
+    strcpy(q->cstrk, cstrk);
 }
