@@ -178,7 +178,18 @@ void setEdgeInfo(Graph g, Edge e, Info info){
 }
 
 void removeEdge(Graph g, Edge e){
-    // VER DEPOIS A IMPLEMENTAÇÃO PARA O TRABALHO EM ESPECÍFICO (desabilitar ou remover completamente).
+    GraphStr* graph = (GraphStr*)g;
+    EdgeStr* edge = (EdgeStr*)e;
+
+    Node from = getFromNode(g, e);
+
+    if(from < 0) return;
+
+    EdgeStr* edgeRem = remover(graph->listaAdj[from], compararEdges, edge);
+
+    if(edgeRem != NULL){
+        free(edgeRem);
+    }
 }
 
 bool isAdjacent(Graph g, Node from, Node to){
@@ -237,14 +248,19 @@ bool bfs(Graph g, Node node, procEdge discoverNode, void *extra){
 }
 
 void killDG(Graph g){
-    // GraphStr* graph = (GraphStr*)g;
+    GraphStr* graph = (GraphStr*)g;
 
-    // for(int i = 0; i < graph->nVert; i++){
-    //     free(graph->vertices);
-    //     limparLista(graph->listaAdj[i], true);
-    // }
-    // destroiHash(graph->tabelaHash);
-    // free(graph);
+    for(int i = 0; i < graph->nVert; i++){
+        if(graph->vertices[i].nome) free(graph->vertices[i].nome);
+        if(graph->vertices[i].info) free(graph->vertices[i].info);
+
+        limparLista(graph->listaAdj[i], true);
+    }
+
+    if (graph->listaAdj) free(graph->listaAdj);
+    if (graph->vertices) free(graph->vertices);
+    destroiHash(graph->tabelaHash);
+    free(graph);
 }
 
 void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*, const void*), void* aux){
