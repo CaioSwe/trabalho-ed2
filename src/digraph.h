@@ -138,6 +138,11 @@ void getNodeNames(Graph g, Lista nomesNodes);
 void getEdges(Graph g, Lista arestas);
 
 /*
+    Insera na lista "allInfo", todas as informações guardadas nos vértices do grafo g.
+*/
+void getAllVerticesInfo(Graph g, Lista allInfo);
+
+/*
     Faz percurso em profundidade sobre g, a partir do no' node, classificando 
     as arestas do grafo, invocando a respectiva funcao.
     A busca em profundidade, eventualmente, pode produzir uma floresta.
@@ -155,9 +160,5 @@ bool bfs(Graph g, Node node, procEdge discoverNode, void *extra);
     Destroi o grafo g.
 */
 void killDG(Graph g);
-
-void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*, const void*), void* aux);
-
-void getAllVerticesInfo(Graph g, Lista allVertices);
 
 #endif

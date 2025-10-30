@@ -29,7 +29,7 @@ Lista criaLista(){
     return l;
 }
 
-Celula* criaCelula(){
+static Celula* criaCelula(){
     Celula* celula = (Celula*)malloc(sizeof(Celula));
 
     if(celula == NULL){
@@ -40,7 +40,7 @@ Celula* criaCelula(){
     return celula;
 }
 
-void inserirInicio(Lista l, void* v){
+void inserirInicio(Lista l, Item v){
     Celula* nova = criaCelula();
     nova->item = v;
 
@@ -62,7 +62,7 @@ void inserirInicio(Lista l, void* v){
     lista->tamanho += 1;
 }
 
-void inserirFim(Lista l, void* v){
+void inserirFim(Lista l, Item v){
     Celula* nova = criaCelula();
     nova->item = v;
 
@@ -84,7 +84,7 @@ void inserirFim(Lista l, void* v){
     lista->tamanho += 1;
 }
 
-void* removerInicio(Lista l){
+Item removerInicio(Lista l){
     listaStr* lista = (listaStr*)l;
 
     Celula* cel = lista->inicio;
@@ -92,7 +92,7 @@ void* removerInicio(Lista l){
 
     lista->inicio = lista->inicio->prox;
 
-    if(lista->inicio == NULL) // lista ficará vazia
+    if(lista->inicio == NULL)
         lista->fim = NULL;
     else
         lista->inicio->ant = NULL;
@@ -104,7 +104,7 @@ void* removerInicio(Lista l){
     return v;
 }
 
-void* removerFim(Lista l){
+Item removerFim(Lista l){
     listaStr* lista = (listaStr*)l;
 
     Celula* cel = lista->fim;
@@ -122,14 +122,14 @@ void* removerFim(Lista l){
     return v;
 }
 
-void* remover(Lista l, bool(*f)(const void*, const void*), const void* item){
+Item remover(Lista l, compararItens compFunc, Item item){
     listaStr* lista = (listaStr*)l;
     
     if (!lista) return NULL;
 
     Celula* cel = lista->inicio;
 
-    if(f(cel->item, item)){
+    if(compFunc(cel->item, item)){
         lista->inicio = cel->prox;
 
         if (lista->inicio) lista->inicio->ant = NULL;
@@ -144,7 +144,7 @@ void* remover(Lista l, bool(*f)(const void*, const void*), const void* item){
     }
 
     while(cel->prox != NULL){
-        if(f(cel->prox->item, item)){
+        if(compFunc(cel->prox->item, item)){
             Celula* toRemove = cel->prox;
             cel->prox = toRemove->prox;
 
@@ -179,64 +179,7 @@ int listaTamanho(Lista l){
     return ((listaStr*)l)->tamanho;
 }
 
-void percorrerLista(Lista l, void (*f)(const void*)) {
-    listaStr* lista = (listaStr*)l;
-
-    Celula* cel = lista->inicio;
-    
-    while(cel != NULL){
-        f(cel->item);
-        cel = cel->prox;
-    }
-}
-
-bool isInLista(Lista l, bool(*f)(const void*, const void*), const void* valor) {
-    listaStr* lista = (listaStr*)l;
-
-    if (!lista) return false;
-
-    Celula* cel = lista->inicio;
-    
-    while(cel != NULL){
-        if(f(cel->item, valor)){
-            return true;
-        }
-        cel = cel->prox;
-    }
-    return false;
-}
-
-void* getItemLista(Lista l, int pos){
-    listaStr* lista = (listaStr*)l;
-
-    if (!lista || pos < 0 || pos >= lista->tamanho) return NULL;
-
-    Celula* cel = lista->inicio;
-
-    for(int i = 0; (i < pos) && (cel != NULL); i++){
-        cel = cel->prox;
-    }
-
-    return cel->item;
-}
-
-void* getItemListaI(Lista l, void* element, bool(*f)(const void*, const void*)){
-    listaStr* lista = (listaStr*)l;
-
-    if (!lista) return NULL;
-
-    Celula* cel = lista->inicio;
-    
-    while(cel != NULL){
-        if(f(cel->item, element)){
-            return cel->item;
-        }
-        cel = cel->prox;
-    }
-    return NULL;
-}
-
-void mapTo(Lista from, Lista to, void* (*mapFunction)(const void*)){
+void mapTo(Lista from, Lista to, mapFunction mapFunc){
     listaStr* listaFrom = (listaStr*)from;
     listaStr* listaTo = (listaStr*)to;
 
@@ -247,7 +190,7 @@ void mapTo(Lista from, Lista to, void* (*mapFunction)(const void*)){
     Celula* cel = listaFrom->inicio;
     
     while(cel != NULL){
-        inserirFim(listaTo, mapFunction(cel->item));
+        inserirFim(listaTo, mapFunc(cel->item));
         cel = cel->prox;
     }
 }
@@ -271,6 +214,63 @@ void concatLista(Lista receive, Lista concatFrom, size_t itemSize){
     }
 }
 
+void percorrerLista(Lista l, runThroughItems runFunc, void* extra) {
+    listaStr* lista = (listaStr*)l;
+
+    Celula* cel = lista->inicio;
+    
+    while(cel != NULL){
+        runFunc(cel->item, extra);
+        cel = cel->prox;
+    }
+}
+
+bool isInLista(Lista l, compararItens compFunc, Item item) {
+    listaStr* lista = (listaStr*)l;
+
+    if (!lista) return false;
+
+    Celula* cel = lista->inicio;
+    
+    while(cel != NULL){
+        if(compFunc(cel->item, item)){
+            return true;
+        }
+        cel = cel->prox;
+    }
+    return false;
+}
+
+Item getItemLista(Lista l, int index){
+    listaStr* lista = (listaStr*)l;
+
+    if (!lista || index < 0 || index >= lista->tamanho) return NULL;
+
+    Celula* cel = lista->inicio;
+
+    for(int i = 0; (i < index) && (cel != NULL); i++){
+        cel = cel->prox;
+    }
+
+    return cel->item;
+}
+
+void* getItemListaI(Lista l, compararItens compFunc, Item item){
+    listaStr* lista = (listaStr*)l;
+
+    if (!lista) return NULL;
+
+    Celula* cel = lista->inicio;
+    
+    while(cel != NULL){
+        if(compFunc(cel->item, item)){
+            return cel->item;
+        }
+        cel = cel->prox;
+    }
+    return NULL;
+}
+
 void imprimirLista(Lista l, void(*imprimir)(const void*)){
     listaStr* lista = (listaStr*)l;
 
@@ -284,7 +284,7 @@ void imprimirLista(Lista l, void(*imprimir)(const void*)){
     }
 }
 
-void limparLista(Lista l, bool freeItems) {
+void limparLista(Lista l, bool limparItens) {
     listaStr* lista = (listaStr*)l;
 
     if (!lista) return;
@@ -293,7 +293,7 @@ void limparLista(Lista l, bool freeItems) {
     while (atual != NULL) {
         Celula* temp = atual;
         atual = atual->prox;
-        if(freeItems) free(temp->item);
+        if(limparItens) free(temp->item);
         free(temp);
     }
 

@@ -22,7 +22,7 @@ typedef struct QuadrasStr{
     QuadraStr* quadras;
 } QuadrasStr;
 
-static void inserirQuadrasHash(const void* item, const void* estrutura){
+static void inserirQuadrasHash(Item item, void* estrutura){
     QuadraStr* quadra = (QuadraStr*)item;
     QuadrasStr* quadras = (QuadrasStr*)estrutura;
 
@@ -40,10 +40,10 @@ static void inserirQuadrasHash(const void* item, const void* estrutura){
     quadras->nQuadras += 1;
 }
 
-void percorrerQuadras(Quadras quadras, void (*f)(Quadra, const void*), void* aux){
+void percorrerQuadras(Quadras quadras, runThroughQuadras runFunc, void* extra){
     QuadrasStr* quadrasStr = (QuadrasStr*)quadras;
 
-    for(int i = 0; i < quadrasStr->nQuadras; i++) f((Quadra)&quadrasStr->quadras[i], aux);
+    for(int i = 0; i < quadrasStr->nQuadras; i++) runFunc((Quadra)&quadrasStr->quadras[i], extra);
 }
 
 Quadras processGeoFile(const char* path){
@@ -105,7 +105,7 @@ Quadras processGeoFile(const char* path){
 
     int nQuadras = listaTamanho(lista) + 1;
 
-    printf("\nNúmero de quadras lidas: %d\n", nQuadras - 1);
+    printf("\nNumero de quadras lidas: %d\n", nQuadras - 1);
 
     // Cria uma estrutura de quadras
     QuadrasStr* quadras = (QuadrasStr*)malloc(sizeof(QuadrasStr));
@@ -114,7 +114,7 @@ Quadras processGeoFile(const char* path){
 
     quadras->quadras = (QuadraStr*)malloc(nQuadras * sizeof(QuadraStr));
 
-    percorrerListaRel(lista, inserirQuadrasHash, quadras);
+    percorrerLista(lista, inserirQuadrasHash, quadras);
 
     // Retorna a estrutura Quadras das quadras lidas no .geo
     return quadras;

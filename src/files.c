@@ -2,19 +2,18 @@
 
 #include "geo.h"
 #include "files.h"
-#include "lista.h"
 #include "digraph.h"
 #include "via.h"
 
-void printQuadrasToSVG(Quadra quadra, const void* file){
+void printQuadrasToSVG(Quadra quadra, void* file){
     FILE* arquivo = (FILE*)file;
 
     fprintf(arquivo, "<rect width=\"%.1lf\" height=\"%.1lf\" x=\"%.1lf\" y=\"%.1lf\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%s\" />\n", getQuadraWidth(quadra), getQuadraHeight(quadra), getQuadraX(quadra), getQuadraY(quadra), getQuadraCFill(quadra), getQuadraCStrk(quadra), getQuadraSW(quadra));
     fprintf(arquivo, "<text x=\"%.1lf\" y=\"%.1lf\" dominant-baseline=\"hanging\">%s</text>", getQuadraX(quadra), getQuadraY(quadra), getQuadraID(quadra));
 }
 
-void printVerticesToSVG(const void* item, const void* file){
-    FILE* arquivo = (FILE*)file;
+void printVerticesToSVG(Item item, void* extra){
+    FILE* arquivo = (FILE*)extra;
 
     double x = getVerticeViaX(item);
     double y = getVerticeViaY(item);

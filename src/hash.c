@@ -39,7 +39,7 @@ Hash criaHash(int tam, bool gerarPrimo){
 
     tabelaHash->balde = (HashCel**)malloc(tabelaHash->tam * sizeof(HashCel*));
 
-    for(int i = 0; i < tam; i++){
+    for(int i = 0; i < tabelaHash->tam; i++){
         tabelaHash->balde[i] = NULL;
     }
 

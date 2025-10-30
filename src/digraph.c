@@ -129,9 +129,9 @@ Edge addEdge(Graph g, Node from, Node to, Info info){
     return edge;
 }
 
-static bool compararNodes(const void* item, const void* comparar){
-    EdgeStr* edge = (EdgeStr*)item;
-    const int* to = (const int*) comparar;
+static bool compararNodes(Item itemO, Item itemC){
+    EdgeStr* edge = (EdgeStr*)itemO;
+    const int* to = (const int*)itemC;
 
     return (edge->to == *to);
 }
@@ -139,14 +139,14 @@ static bool compararNodes(const void* item, const void* comparar){
 Edge getEdge(Graph g, Node from, Node to){
     GraphStr* graph = (GraphStr*)g;
 
-    EdgeStr* edge = getItemListaI(graph->listaAdj[from], &to, compararNodes);
+    EdgeStr* edge = getItemListaI(graph->listaAdj[from], compararNodes, &to);
     
     return edge;
 }
 
-static bool compararEdges(const void* item, const void* comparar){
-    const EdgeStr* edgeItem = (const EdgeStr*)item;
-    const EdgeStr* edgeComp = (const EdgeStr*)comparar;
+static bool compararEdges(Item itemO, Item itemC){
+    const EdgeStr* edgeItem = (const EdgeStr*)itemO;
+    const EdgeStr* edgeComp = (const EdgeStr*)itemC;
 
     return (edgeItem == edgeComp);
 }
@@ -198,7 +198,7 @@ bool isAdjacent(Graph g, Node from, Node to){
     return isInLista(graph->listaAdj[from], compararNodes, &to);
 }
 
-static void* mappingGetToNode(const void* item){
+static void* mappingGetToNode(Item item){
     EdgeStr* edge = (EdgeStr*)item;
     return &edge->to;
 }
@@ -239,6 +239,14 @@ void getEdges(Graph g, Lista arestas){
     }
 }
 
+void getAllVerticesInfo(Graph g, Lista allInfo){
+    GraphStr* graph = (GraphStr*)g;
+
+    for(int i = 0; i < graph->nVert; i++){
+        inserirFim(allInfo, graph->vertices[i].info);
+    }
+}
+
 // ?
 
 bool dfs(Graph g, Node node, procEdge treeEdge, procEdge forwardEdge, procEdge returnEdge, procEdge crossEdge, dfsRestarted newTree, void *extra){
@@ -265,24 +273,4 @@ void killDG(Graph g){
     if (graph->vertices) free(graph->vertices);
     destroiHash(graph->tabelaHash);
     free(graph);
-}
-
-void percorrerGrafoRel(Graph g, void (*imprimir)(const void*, const void*, const void*), void* aux){
-    GraphStr* graph = (GraphStr*)g;
-
-    FILE* arq = (FILE*)aux;
-
-    for(int i = 0; i < graph->nVert; i++){
-        fprintf(arq, "(%-2d) %-25s -> ", i, graph->vertices[i].nome);
-        percorrerListaRelRel(graph->listaAdj[i], imprimir, aux, graph);
-        fprintf(arq, "NULL\n");
-    }
-}
-
-void getAllVerticesInfo(Graph g, Lista allVertices){
-    GraphStr* graph = (GraphStr*)g;
-
-    for(int i = 0; i < graph->nVert; i++){
-        inserirFim(allVertices, graph->vertices[i].info);
-    }
 }

@@ -20,6 +20,12 @@ typedef void* Quadra;
 typedef void* Quadras;
 
 /**
+ * @brief Função que recebe uma quadra e aplica uma operação qualquer sob ele sem modificação.
+ * @return Não há retorno de algum valor.
+ */
+typedef void (*runThroughQuadras) (Quadra quadra, void* extra);
+
+/**
  * @brief Processa o arquivo .geo passado como parâmetro e insere as formas adquiridas em uma lista de retorno com formas do tipo Quadra.
  * 
  * @param path String de caminho do arquivo .geo.
@@ -31,10 +37,10 @@ Quadras processGeoFile(const char* path);
  * @brief Percorre as quadras e passa cada quadra para a função F.
  * 
  * @param f Ponteiro para uma função externa que têm como paramêtro uma Quadra e um ponteiro para uma variável auxiliar.
- * @param aux Ponteiro para uma variável qualquer auxiliar.
+ * @param extra Ponteiro para uma variável qualquer auxiliar.
  * @return Não há retorno de algum valor.
 */
-void percorrerQuadras(Quadras quadras, void (*f)(Quadra, const void*), void* aux);
+void percorrerQuadras(Quadras quadras, runThroughQuadras runFunc, void* extra);
 
 // FUNÇÕES GET
 

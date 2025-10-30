@@ -1,0 +1,2 @@
+gcc-make32
+./ted

@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <graphviz/gvc.h>
-#include <graphviz/cgraph.h>
+// #include <graphviz/gvc.h>
+// #include <graphviz/cgraph.h>
 
 /*
     TERMINAR

@@ -19,13 +19,13 @@ typedef struct Percurso{
     char cmr[256];
 }Percurso;
 
-static void removerQuadras(const void* item){
+static void removerQuadras(Item item, void* extra){
     // desabillitarArestas(item);
     // ou alguma coisa assim
 }
 
-static void bloquearSentido(const void* item, const void* aux){
-    char* sentido = (char*)aux;
+static void bloquearSentido(Item item, void* extra){
+    char* sentido = (char*)extra;
     // bloquearArestas(item, sentido);
     // ou alguma coisa assim
 }
@@ -95,7 +95,7 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             // Pega a lista das quadras dentro da região [x, y, w, h].
             getNodeRegiaoSTrp(arvore, x, y, w, h, lista);
             // Percorre a lista das quadras da região, desabilitando-as.
-            percorrerLista(lista, removerQuadras);
+            percorrerLista(lista, removerQuadras, NULL);
 
             limparLista(lista, false);
         }
@@ -118,7 +118,7 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             getNodeRegiaoSTrp(arvore, x, y, w, h, lista);
 
             // Percorre a lista das quadras encontradas, bloqueando-as no sentido fornecido.
-            percorrerListaRel(lista, bloquearSentido, sentido);
+            percorrerLista(lista, bloquearSentido, sentido);
 
             limparLista(lista, false);
         }

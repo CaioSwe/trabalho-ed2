@@ -22,7 +22,7 @@ typedef enum GEOs {
 float maxX = 0;
 float maxY = 0;
 
-void getMax(Quadra quadra, const void* any){
+void getMax(Quadra quadra, void* extra){
     // Abusando um pouco da função de mudar extensão :)
     // A função atoi() converte uma string em um inteiro equivalente.
     float itemW = getQuadraX(quadra) + getQuadraWidth(quadra) + atoi(changeExtension(getQuadraSW(quadra), "")) + 1;
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]){
         FILE* fViaSaida = fopen(fOutputViaPath, "w");
         printf("Escrevendo no arquivo: %s\n", fOutputViaPath);
 
-        percorrerGrafoRel(grafo, printToTXT, fViaSaida);
+        // ARRUMAR PARA: bfs ou dfs -> percorrerGrafoRel(grafo, printToTXT, fViaSaida);
 
         fclose(fViaSaida);
     }
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]){
     fprintf(fSaida, "<svg width=\"%.1f\" height=\"%.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX, maxY);
     percorrerQuadras(formas, printQuadrasToSVG, fSaida);
     // Tire de comentário caso queria visualizar os vertices do grafo produzido pelo arquivo .via
-    percorrerListaRel(vertices, printVerticesToSVG, fSaida);
+    percorrerLista(vertices, printVerticesToSVG, fSaida);
     fprintf(fSaida, "</svg>");
 
     fclose(fSaida);
