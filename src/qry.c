@@ -41,7 +41,7 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
     FILE* fEntrada = fopen(path, "r");
     printf("\nLendo arquivo: %s\n", path);
 
-    // Variáveis de operação, ID da quadra e posição, respectivamente.
+    // Variáveis de operação, cep, face, numero, quadrado [x, y, width, height], cor de preenchimento, cor de borda, nome, sentido, fator escalar, cor do caminho curto e rápido, respectivamente.
     char op[256];
     
     char cep[256];
@@ -61,8 +61,11 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
     char cmc[256];
     char cmr[256];
 
-    // Cria uma lista para as operações de [catac, blq]
+    // Cria uma lista para as operações [catac, blq]
     Lista lista = criaLista();
+
+    // Cria uma lista com os bloqueios feitos.
+    Lista bloqueios = criaLista();
 
     Percurso* percurso = (Percurso*)malloc(sizeof(Percurso));
 
@@ -75,10 +78,12 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             // Pega [cep, face, num] da operação de origem.
             fscanf(fEntrada, "%s %s %d\n", cep, face, &num);
 
+            // Pega o node com o cep registrado no grafo.
             Node node = getNode(grafo, cep);
 
             percurso->origem = (Ponto*)malloc(sizeof(Ponto));
 
+            // Registra as informações do node encontrado na origem do percurso.
             percurso->origem->node = node;
             percurso->origem->face = face;
             percurso->origem->num = num;
@@ -87,8 +92,9 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             // Pega [x, y, w, h]
             fscanf(fEntrada, "%lf %lf %lf %lf\n", &x, &y, &w, &h);
 
+            // Pega a lista das quadras dentro da região [x, y, w, h].
             getNodeRegiaoSTrp(arvore, x, y, w, h, lista);
-
+            // Percorre a lista das quadras da região, desabilitando-as.
             percorrerLista(lista, removerQuadras);
 
             limparLista(lista, false);
@@ -108,8 +114,10 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             // Pega [nome, sentido, x, y, w, h]
             fscanf(fEntrada, "%s %s %lf %lf %lf %lf\n", nome, sentido, &x, &y, &w, &h);
         
+            // Pega as quadras dentro da região [x, y, w, h].
             getNodeRegiaoSTrp(arvore, x, y, w, h, lista);
 
+            // Percorre a lista das quadras encontradas, bloqueando-as no sentido fornecido.
             percorrerListaRel(lista, bloquearSentido, sentido);
 
             limparLista(lista, false);
@@ -118,24 +126,25 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             // Pega [nome]
             fscanf(fEntrada, "%s\n", nome);
         
-            getNodeRegiaoSTrp(arvore, x, y, w, h, lista);
-
-            percorrerListaRel(lista, bloquearSentido, sentido);
-
-            limparLista(lista, false);
+            // Desbloqueia as quadras com a operação blq de mesmo nome.
+            // .
         }
         else if(strcmp(op, "b") == 0){
             // Pega [x, y, fator]
             fscanf(fEntrada, "%lf %lf %s\n", &x, &y, fator);
         
-            // perguntar
+            // Pega o node mais próximo das coordenadas.
+            // getClosestNode(graph, x, y);
+
+            // Começa o percurso em largura do node.
+            // bfs(g, node, discoverNode, extra)
         }
         else if(strcmp(op, "p?") == 0){
             // Pega [cep, face, num, cmc, cmr]
             fscanf(fEntrada, "%s %c %d %s %s\n", cep, &face, &num, cmc, cmr);
 
             if(percurso->origem == NULL){
-                printf("\n- processQryFile() -> ponto de origem não definido antes da operação \"p\". -");
+                printf("\n- processQryFile() -> ponto de origem não definido antes da operação \"(p?)\". -");
                 continue;
             }
 

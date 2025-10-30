@@ -1,7 +1,9 @@
 #ifndef _FILES_h_
 #define _FILES_h_
 
-void printQuadrasToSVG(const void* item, const void* file);
+#include "geo.h"
+
+void printQuadrasToSVG(Quadra quadra, const void* file);
 
 void printVerticesToSVG(const void* item, const void* file);
 

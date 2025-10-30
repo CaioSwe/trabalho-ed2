@@ -15,6 +15,6 @@
  * @param path String de caminho do arquivo .qry.
  * @return Retorna uma lista com as formas do .qry.
  */
-Lista processQryFile(Graph grafo, STreap arvore, const char* path);
+Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* path);
 
 #endif

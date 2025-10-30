@@ -190,28 +190,6 @@ void percorrerLista(Lista l, void (*f)(const void*)) {
     }
 }
 
-void percorrerListaRel(Lista l, void (*f)(const void*, const void*), void* aux) {
-    listaStr* lista = (listaStr*)l;
-
-    Celula* cel = lista->inicio;
-    
-    while(cel != NULL){
-        f(cel->item, aux);
-        cel = cel->prox;
-    }
-}
-
-void percorrerListaRelRel(Lista l, void (*f)(const void*, const void*, const void*), void* aux, void* aux2) {
-    listaStr* lista = (listaStr*)l;
-
-    Celula* cel = lista->inicio;
-    
-    while(cel != NULL){
-        f(cel->item, aux, aux2);
-        cel = cel->prox;
-    }
-}
-
 bool isInLista(Lista l, bool(*f)(const void*, const void*), const void* valor) {
     listaStr* lista = (listaStr*)l;
 

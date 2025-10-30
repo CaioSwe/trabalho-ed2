@@ -239,13 +239,17 @@ void getEdges(Graph g, Lista arestas){
     }
 }
 
-/*
-    Percorre o grafo g em largura, a partir do no' node. discoverNode e' usada
-    para a aresta (x,y) usada para "descobrir" o y.
-*/
-bool bfs(Graph g, Node node, procEdge discoverNode, void *extra){
-    
+// ?
+
+bool dfs(Graph g, Node node, procEdge treeEdge, procEdge forwardEdge, procEdge returnEdge, procEdge crossEdge, dfsRestarted newTree, void *extra){
+    return false;
 }
+
+bool bfs(Graph g, Node node, procEdge discoverNode, void *extra){
+    return false;
+}
+
+// ?
 
 void killDG(Graph g){
     GraphStr* graph = (GraphStr*)g;

@@ -1,54 +1,90 @@
 #include "streap.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <graphviz/gvc.h>
+#include <graphviz/cgraph.h>
+
 /*
     TERMINAR
 */
 
 typedef struct BoundingBox{
-    double x;
-    double y;
-    double width;
-    double height;
+    double x1, y1;
+    double x2, y2;
 } BoundingBox;
 
-typedef struct RootStr{
-    double x, y;        // Chave
+typedef struct NodeStr{
+    double x, y;        // Chave de busca
     int prioridade;
     Info info;
     
-    struct RootStr* pai;
-    struct RootStr* esq;
-    struct RootStr* dir;
-} RootStr;
+    BoundingBox* box;
+
+    struct NodeStr* pai;
+    struct NodeStr* esq;
+    struct NodeStr* dir;
+} NodeStr;
 
 typedef struct STreapStr{
-    RootStr* raiz;
+    NodeStr* raiz;
     int altura;
     int nRoot;
+
+    double epsilon;
 }STreapStr;
 
-STreap createSTrp(double epsilon);
+STreap createSTrp(double epsilon){
+    STreapStr* st = (STreapStr*)malloc(sizeof(STreapStr));
+    if(!st) return NULL;
 
-Root insertSTrp(STreap t, double x, double y,  Info info){
+    st->raiz = NULL;
+    st->altura = 0;
+    st->nRoot = 0;
+    st->epsilon = epsilon;
+
+    return (STreap)st;
+}
+
+Node insertSTrp(STreap t, double x, double y, Info info){
     STreapStr* st = (STreapStr*)t;
+
+    NodeStr* newNode = (NodeStr*)malloc(sizeof(NodeStr));
+
+    newNode->dir = NULL;
+    newNode->esq = NULL;
+    newNode->info = info;
+
+    newNode->x = x;
+    newNode->y = y;
+
+    newNode->box = (BoundingBox*)malloc(sizeof(BoundingBox));
+
+    if(st->raiz == NULL){
+        st->raiz = newNode;
+        return st->raiz;
+    }
+
+    //////////////////////////// ????????????
 
     return NULL;
 }
 
 void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista resultado);
 
-Info getInfoSTrp(STreap t, Root n){
-    return ((RootStr*)n)->info;
+Info getInfoSTrp(STreap t, Node n){
+    return ((NodeStr*)n)->info;
 }
 
-Root getNodeSTrp(STreap t, double xa, double ya);
+Node getNodeSTrp(STreap t, double xa, double ya);
 
-void updateInfoSTrp(STreap t, Root n, Info i){
-    ((RootStr*)n)->info = i;
+void updateInfoSTrp(STreap t, Node n, Info i){
+    ((NodeStr*)n)->info = i;
 }
 
-Info deleteNodeSTrp(STreap t, Root n){
-    RootStr* root = ((RootStr*)n);
+Info deleteNodeSTrp(STreap t, Node n){
+    NodeStr* root = ((NodeStr*)n);
 
     Info i = root->info;
 
@@ -58,7 +94,7 @@ Info deleteNodeSTrp(STreap t, Root n){
     return i;
 }
 
-Info removeSTrp(STreap t,double xa, double ya);
+Info removeSTrp(STreap t, double xa, double ya);
 
 void printSTrp(STreap t, char *nomeArq);
 

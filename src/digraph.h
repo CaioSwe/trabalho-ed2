@@ -130,7 +130,7 @@ void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes);
 /*
     Insere na lista "nomesNodes" os nomes atribuidos aos nos do grafo.
 */
-void  getNodeNames(Graph g, Lista nomesNodes);
+void getNodeNames(Graph g, Lista nomesNodes);
 
 /*
     Insere na lista "arestas", as arestas de g.
@@ -138,7 +138,7 @@ void  getNodeNames(Graph g, Lista nomesNodes);
 void getEdges(Graph g, Lista arestas);
 
 /*
-    Faz percurso em profundidade sobre  g, a partir do no' node, classificando 
+    Faz percurso em profundidade sobre g, a partir do no' node, classificando 
     as arestas do grafo, invocando a respectiva funcao.
     A busca em profundidade, eventualmente, pode produzir uma floresta.
     newTree e' invocada sempre que o percurso for retomado.

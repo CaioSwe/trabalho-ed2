@@ -40,6 +40,12 @@ static void inserirQuadrasHash(const void* item, const void* estrutura){
     quadras->nQuadras += 1;
 }
 
+void percorrerQuadras(Quadras quadras, void (*f)(Quadra, const void*), void* aux){
+    QuadrasStr* quadrasStr = (QuadrasStr*)quadras;
+
+    for(int i = 0; i < quadrasStr->nQuadras; i++) f((Quadra)&quadrasStr->quadras[i], aux);
+}
+
 Quadras processGeoFile(const char* path){
     // Checa se o caminho dado contém a extensão .geo
     if(strstr(path, ".geo") == NULL){
@@ -97,7 +103,9 @@ Quadras processGeoFile(const char* path){
     // Fecha o arquivo de entrada
     fclose(fEntrada);
 
-    int nQuadras = listaTamanho(lista);
+    int nQuadras = listaTamanho(lista) + 1;
+
+    printf("\nNúmero de quadras lidas: %d\n", nQuadras - 1);
 
     // Cria uma estrutura de quadras
     QuadrasStr* quadras = (QuadrasStr*)malloc(sizeof(QuadrasStr));
@@ -113,6 +121,10 @@ Quadras processGeoFile(const char* path){
 }
 
 // FUNÇÕES GET
+
+const char* getQuadraID(Quadra quadra){
+    return ((QuadraStr*)quadra)->id;
+}
 
 double getQuadraX(Quadra quadra){
     return ((QuadraStr*)quadra)->x;

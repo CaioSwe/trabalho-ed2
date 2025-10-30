@@ -2,9 +2,9 @@ PROJ_NAME = ted
 
 CC = gcc
 CFLAGS = -g -O0 -std=c99 -fstack-protector-all -Werror=implicit-function-declaration -Wall
-LDFLAGS = 
-LIBS = -lm
-SRCS = main.c lista.c fileManager.c geo.c files.c digraph.c hash.c via.c # digraph.c hash.c priority_queue.c fila.c streap.c utils.c via.c geo.c svg.c qry.c
+LDFLAGS =
+LIBS = -lm -lgvc -lcgraph
+SRCS = main.c lista.c fileManager.c geo.c files.c digraph.c hash.c via.c
 
 OBJETOS = $(SRCS:.c=.o)
 

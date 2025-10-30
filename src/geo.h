@@ -4,6 +4,18 @@
 #include "lista.h"
 #include "hash.h"
 
+/**
+ * Cabeçalho dedicado à leitura do arquivo .geo,
+ * suas formas geométricas lidas no mesmo,
+ * bem como suas funções de get e set.
+ * 
+ * Cada estrutura de uma forma geométrica contém uma estrutura que guarda
+ * um array das formas, quantidade das formas lidas e uma Tabela Hash para
+ * associação de Nome - ID.
+ * 
+ * Formas nas quais se encontram nesse cabeçalho: Quadra [retângulo].
+*/
+
 typedef void* Quadra;
 typedef void* Quadras;
 
@@ -12,10 +24,22 @@ typedef void* Quadras;
  * 
  * @param path String de caminho do arquivo .geo.
  * @return Retorna uma lista com as formas do .geo.
- */
+*/
 Quadras processGeoFile(const char* path);
 
+/**
+ * @brief Percorre as quadras e passa cada quadra para a função F.
+ * 
+ * @param f Ponteiro para uma função externa que têm como paramêtro uma Quadra e um ponteiro para uma variável auxiliar.
+ * @param aux Ponteiro para uma variável qualquer auxiliar.
+ * @return Não há retorno de algum valor.
+*/
+void percorrerQuadras(Quadras quadras, void (*f)(Quadra, const void*), void* aux);
+
 // FUNÇÕES GET
+
+// Retorna o ID da quadra.
+const char* getQuadraID(Quadra quadra);
 
 // Retorna o ponto X da quadra.
 double getQuadraX(Quadra quadra);
