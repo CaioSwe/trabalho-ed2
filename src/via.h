@@ -3,10 +3,19 @@
 
 #include "digraph.h"
 
+typedef void* VerticeVia;
+typedef void* ArestaVia;
+
 Graph processViaFile(const char* path);
 
-double getVerticeViaX(const void* VV);
+double getVerticeViaX(VerticeVia vv);
 
-double getVerticeViaY(const void* VV);
+double getVerticeViaY(VerticeVia vv);
+
+bool isArestaEnabled(ArestaVia av);
+
+void blockAresta(ArestaVia av);
+
+void unblockAresta(ArestaVia av);
 
 #endif

@@ -150,8 +150,8 @@ int main(int argc, char* argv[]){
 
     fprintf(fSaida, "<svg width=\"%.1f\" height=\"%.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX, maxY);
     percorrerQuadras(formas, printQuadrasToSVG, fSaida);
-    // Tire de comentário caso queria visualizar os vertices do grafo produzido pelo arquivo .via
-    percorrerLista(vertices, printVerticesToSVG, fSaida);
+    // Tire de comentário caso queria visualizar os vertices do grafo no SVG produzido pelo arquivo .via
+    // percorrerLista(vertices, printVerticesToSVG, fSaida);
     fprintf(fSaida, "</svg>");
 
     fclose(fSaida);

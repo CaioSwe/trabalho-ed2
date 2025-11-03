@@ -7,7 +7,7 @@
 
 typedef struct HashCel{
     char* chave;
-    int valor;
+    HashItem valor;
 
     struct HashCel* prox;
 } HashCel;
@@ -17,7 +17,7 @@ typedef struct HashStr{
     HashCel** balde;
 } HashStr;
 
-bool isPrimo(int v){
+static bool isPrimo(int v){
     int raizV = sqrt(v);
     for(int i = 2; i <= raizV; i++){
         if(v % i == 0) return false;
@@ -25,7 +25,7 @@ bool isPrimo(int v){
     return true;
 }
 
-int proxPrimo(int v){
+static int proxPrimo(int v){
     v += (v % 2 == 0 ? 1 : 2);
     while(isPrimo(v) == false) v += 2;
 
@@ -60,7 +60,7 @@ static int hashIndex(const char* nome, int tam){
     return hashFunction(nome) % tam;
 }
 
-void inserirHash(Hash hash, const char* nome, int valor){
+void inserirHash(Hash hash, const char* nome, HashItem valor){
     HashStr* tabelaHash = (HashStr*)hash;
     int i = hashIndex(nome, tabelaHash->tam);
     
@@ -86,7 +86,7 @@ void inserirHash(Hash hash, const char* nome, int valor){
     tabelaHash->balde[i] = newHashCel;
 }
 
-int getHashValue(Hash hash, const char* nome){
+HashItem getHashValue(Hash hash, const char* nome){
     HashStr* tabelaHash = (HashStr*)hash;
 
     int i = hashIndex(nome, tabelaHash->tam);
@@ -97,10 +97,10 @@ int getHashValue(Hash hash, const char* nome){
         if(strcmp(hashCel->chave, nome) == 0) return hashCel->valor;
     }
 
-    return -1;
+    return NULL;
 }
 
-void destroiHash(Hash hash){
+void destroiHash(Hash hash, freeFunc fFunc){
     HashStr* tabelaHash = (HashStr*)hash;
 
     for(int i = 0; i < tabelaHash->tam; i++){
@@ -110,6 +110,9 @@ void destroiHash(Hash hash){
             HashCel* prox = cel->prox;
 
             free(cel->chave);
+
+            if(fFunc != NULL) fFunc(cel->valor);
+
             free(cel);
 
             cel = prox;

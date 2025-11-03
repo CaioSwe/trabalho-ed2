@@ -14,6 +14,8 @@ typedef struct ArestaViaStr{
 
     double cmp;
     double vm;
+
+    bool habilitada;
 } ArestaViaStr;
 
 Graph processViaFile(const char* path){
@@ -63,6 +65,7 @@ Graph processViaFile(const char* path){
             addNode(g, id, VV);
         }
         else if(op == 'e'){
+            // Cria uma aresta [origem(i, j), vizinhos(ldir, lesq), comprimento, velocidade media e nome].
             fscanf(fEntrada, "%s %s %s %s %lf %lf %s", i, j, ldir, lesq, &cmp, &vm, nome);
 
             Node origem = getNode(g, i);
@@ -84,6 +87,9 @@ Graph processViaFile(const char* path){
             via->cmp = cmp;
             via->vm = vm;
 
+            // Via e' habilitada por padrao em sua criacao.
+            via->habilitada = true;
+
             addEdge(g, origem, destino, via);
         }
     }
@@ -99,10 +105,24 @@ Graph processViaFile(const char* path){
 
 // FUNÇÕES GET
 
-double getVerticeViaX(const void* VV){
-    return ((VerticeViaStr*)VV)->x;
+double getVerticeViaX(VerticeVia vv){
+    return ((VerticeViaStr*)vv)->x;
 }
 
-double getVerticeViaY(const void* VV){
-    return ((VerticeViaStr*)VV)->y;
+double getVerticeViaY(VerticeVia vv){
+    return ((VerticeViaStr*)vv)->y;
+}
+
+bool isArestaEnabled(ArestaVia av){
+    return ((ArestaViaStr*)av)->habilitada;
+}
+
+// FUNÇÕES SET
+
+void blockAresta(ArestaVia av){
+    ((ArestaViaStr*)av)->habilitada = false;
+}
+
+void unblockAresta(ArestaVia av){
+    ((ArestaViaStr*)av)->habilitada = true;
 }

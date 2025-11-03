@@ -74,7 +74,13 @@ Node addNode(Graph g, char* nome, Info info){
     v->info = info;
     
     graph->listaAdj[graph->nVert] = criaLista();
-    inserirHash(graph->tabelaHash, v->nome, graph->nVert);
+
+    int nVert = graph->nVert;
+    
+    int* nVertp = (int*)malloc(sizeof(int));
+    *nVertp = nVert;
+
+    inserirHash(graph->tabelaHash, v->nome, nVertp);
 
     graph->vertices[graph->nVert].nome = v->nome;
     graph->vertices[graph->nVert].info = v->info;
@@ -89,7 +95,7 @@ Node addNode(Graph g, char* nome, Info info){
 Node getNode(Graph g, char* nome){
     GraphStr* graph = (GraphStr*)g;
 
-    return getHashValue(graph->tabelaHash, nome);    
+    return *((int*)getHashValue(graph->tabelaHash, nome));
 }
 
 Info getNodeInfo(Graph g, Node node){
@@ -271,6 +277,6 @@ void killDG(Graph g){
 
     if (graph->listaAdj) free(graph->listaAdj);
     if (graph->vertices) free(graph->vertices);
-    destroiHash(graph->tabelaHash);
+    destroiHash(graph->tabelaHash, free);
     free(graph);
 }
