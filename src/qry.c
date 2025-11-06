@@ -36,11 +36,12 @@ static void removerQuadras(Item item, void* extra){
 }
 
 // Desabilita todas as arestas passadas para esta funcao.
+// Possíveis valores de sentido: ns (Norte-Sul), sn (Sul-Norte), lo (Leste-Oeste), ol (Oeste-Leste).
 static void bloquearSentido(Item item, void* extra){
     char* sentido = (char*)extra;
     Node node = (Node)item;
 
-
+    // 
 
     // blockAresta(item, sentido);
     // ou alguma coisa assim
