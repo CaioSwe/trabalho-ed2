@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// CONSERTAR ORDEM DOS PARAMETROS DAS FUNÇÕES DE CALLBACK (inconsistente)
+#include "fileManager.h"
 
 typedef struct cel{
     void* item;
@@ -18,10 +18,7 @@ typedef struct Lista{
 
 Lista criaLista(){
     listaStr* l = (listaStr*)malloc(sizeof(listaStr));
-    if(l == NULL){
-        printf("\n- criaLista() -> Erro na alocação de memória da lista. -");
-        return NULL;
-    }
+    if(checkAllocation(l, "Criacao de lista.")) return NULL;
 
     l->inicio = NULL;
     l->fim = NULL;
@@ -31,20 +28,21 @@ Lista criaLista(){
 
 static Celula* criaCelula(){
     Celula* celula = (Celula*)malloc(sizeof(Celula));
-
-    if(celula == NULL){
-        printf("\n- criaCelula() -> Erro na alocação de memória da célula. -");
-        return NULL;
-    }
+    if(checkAllocation(celula, "Celula de lista.")) return NULL;
 
     return celula;
 }
 
 void inserirInicio(Lista l, Item v){
-    Celula* nova = criaCelula();
-    nova->item = v;
+    if(l == NULL){
+        printf("\n - inserirInicio() -> Lista l passada e' nula.");
+        return;
+    }
 
     listaStr* lista = (listaStr*)l;
+
+    Celula* nova = criaCelula();
+    nova->item = v;
 
     if (lista->inicio == NULL){ // lista vazia
         lista->inicio = nova;
@@ -63,12 +61,17 @@ void inserirInicio(Lista l, Item v){
 }
 
 void inserirFim(Lista l, Item v){
-    Celula* nova = criaCelula();
-    nova->item = v;
+    if(l == NULL){
+        printf("\n - inserirFim() -> Lista l passada e' nula.");
+        return;
+    }
 
     listaStr* lista = (listaStr*)l;
 
-    if (lista->inicio == NULL){
+    Celula* nova = criaCelula();
+    nova->item = v;
+
+    if (lista->inicio == NULL){ // lista vazia
         lista->inicio = nova;
         lista->fim = nova;
         nova->prox = NULL;
@@ -85,6 +88,11 @@ void inserirFim(Lista l, Item v){
 }
 
 Item removerInicio(Lista l){
+    if(l == NULL){
+        printf("\n - removerInicio() -> Lista l passada e' nula.");
+        return;
+    }
+
     listaStr* lista = (listaStr*)l;
 
     Celula* cel = lista->inicio;
@@ -92,10 +100,8 @@ Item removerInicio(Lista l){
 
     lista->inicio = lista->inicio->prox;
 
-    if(lista->inicio == NULL)
-        lista->fim = NULL;
-    else
-        lista->inicio->ant = NULL;
+    if(lista->inicio == NULL) lista->fim = NULL;
+    else lista->inicio->ant = NULL;
     
     free(cel);
 
@@ -105,6 +111,11 @@ Item removerInicio(Lista l){
 }
 
 Item removerFim(Lista l){
+    if(l == NULL){
+        printf("\n - removerFim() -> Lista l passada e' nula.");
+        return;
+    }
+
     listaStr* lista = (listaStr*)l;
 
     Celula* cel = lista->fim;
@@ -123,9 +134,17 @@ Item removerFim(Lista l){
 }
 
 Item remover(Lista l, compararItens compFunc, Item item){
+    if(l == NULL){
+        printf("\n - remover() -> Lista l passada e' nula.");
+        return NULL;
+    }
+
+    if(compFunc == NULL){
+        printf("\n - remover() -> Funcao de comparacao nula. -");
+        return NULL;
+    }
+
     listaStr* lista = (listaStr*)l;
-    
-    if (!lista) return NULL;
 
     Celula* cel = lista->inicio;
 
@@ -162,11 +181,15 @@ Item remover(Lista l, compararItens compFunc, Item item){
         cel = cel->prox;
     }
 
-
     return NULL;
 }
 
 bool isListaVazia(Lista l){
+    if(l == NULL){
+        printf("\n - isListaVazia() -> Lista l passada e' nula.");
+        return;
+    }
+
     listaStr* lista = (listaStr*)l;
 
     if(lista->inicio == NULL){
@@ -176,14 +199,27 @@ bool isListaVazia(Lista l){
 }
 
 int listaTamanho(Lista l){
+    if(l == NULL){
+        printf("\n - listaTamanho() -> Lista l passada e' nula.");
+        return;
+    }
+
     return ((listaStr*)l)->tamanho;
 }
 
 void mapTo(Lista from, Lista to, mapFunction mapFunc){
+    if(from == NULL || to == NULL){
+        printf("\n - mapTo() -> Lista l passada e' nula.");
+        return;
+    }
+
+    if(mapFunc == NULL){
+        printf("\n - mapTo() -> Funcao de mapeamento nula. -");
+        return;
+    }
+
     listaStr* listaFrom = (listaStr*)from;
     listaStr* listaTo = (listaStr*)to;
-
-    if (!listaFrom || !listaTo) return;
 
     limparLista(listaTo, false);
 
@@ -196,10 +232,13 @@ void mapTo(Lista from, Lista to, mapFunction mapFunc){
 }
 
 void concatLista(Lista receive, Lista concatFrom, size_t itemSize){
+    if(receive == NULL || concatFrom == NULL){
+        printf("\n - concatLista() -> Lista l passada e' nula.");
+        return;
+    }
+
     listaStr* listaR = (listaStr*)receive;
     listaStr* listaCF = (listaStr*)concatFrom;
-
-    if(!listaR || !listaCF) return;
 
     if(listaR->inicio == NULL) copyLista(concatFrom, receive, itemSize);
 
@@ -215,6 +254,15 @@ void concatLista(Lista receive, Lista concatFrom, size_t itemSize){
 }
 
 void percorrerLista(Lista l, runThroughItems runFunc, void* extra) {
+    if(l == NULL){
+        printf("\n - percorrerLista() -> Lista l passada e' nula.");
+        return;
+    }
+
+    if(runFunc == NULL){
+        printf("\n - percorrerLista() -> Lista de percursao nula.");
+    }
+
     listaStr* lista = (listaStr*)l;
 
     Celula* cel = lista->inicio;
@@ -226,6 +274,16 @@ void percorrerLista(Lista l, runThroughItems runFunc, void* extra) {
 }
 
 bool isInLista(Lista l, compararItens compFunc, Item item) {
+    if(l == NULL){
+        printf("\n - isInLista() -> Lista l passada e' nula.");
+        return;
+    }
+
+    if(compFunc == NULL){
+        printf("\n - isInLista() -> Funcao de comparacao nula. -");
+        return NULL;
+    }
+
     listaStr* lista = (listaStr*)l;
 
     if (!lista) return false;
@@ -242,6 +300,11 @@ bool isInLista(Lista l, compararItens compFunc, Item item) {
 }
 
 Item getItemLista(Lista l, int index){
+    if(l == NULL){
+        printf("\n - getItemLista() -> Lista l passada e' nula.");
+        return;
+    }
+
     listaStr* lista = (listaStr*)l;
 
     if (!lista || index < 0 || index >= lista->tamanho) return NULL;
@@ -256,6 +319,16 @@ Item getItemLista(Lista l, int index){
 }
 
 void* getItemListaI(Lista l, compararItens compFunc, Item item){
+    if(l == NULL){
+        printf("\n - getItemListaI() -> Lista l passada e' nula.");
+        return;
+    }
+
+    if(compFunc == NULL){
+        printf("\n - getItemListaI() -> Funcao de comparacao nula. -");
+        return NULL;
+    }
+
     listaStr* lista = (listaStr*)l;
 
     if (!lista) return NULL;
@@ -271,20 +344,12 @@ void* getItemListaI(Lista l, compararItens compFunc, Item item){
     return NULL;
 }
 
-void imprimirLista(Lista l, void(*imprimir)(const void*)){
-    listaStr* lista = (listaStr*)l;
-
-    if (!lista) return;
-
-    Celula* cel = lista->inicio;
-
-    while(cel != NULL){
-        imprimir(cel->item);
-        cel = cel->prox;
+void limparLista(Lista l, bool limparItens){
+    if(l == NULL){
+        printf("\n - limparLista() -> Lista l passada e' nula.");
+        return;
     }
-}
 
-void limparLista(Lista l, bool limparItens) {
     listaStr* lista = (listaStr*)l;
 
     if (!lista) return;
@@ -303,6 +368,11 @@ void limparLista(Lista l, bool limparItens) {
 }
 
 void copyLista(Lista f, Lista t, size_t itemSize){
+    if(f == NULL || t == NULL){
+        printf("\n - copyLista() -> Lista l passada e' nula.");
+        return;
+    }
+
     listaStr* from = (listaStr*)f;
     listaStr* to = (listaStr*)t;
 

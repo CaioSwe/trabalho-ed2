@@ -103,6 +103,16 @@ Graph processViaFile(const char* path){
     return g;
 }
 
+// FUNÇÕES SET
+
+void blockAresta(ArestaVia av){
+    ((ArestaViaStr*)av)->habilitada = false;
+}
+
+void unblockAresta(ArestaVia av){
+    ((ArestaViaStr*)av)->habilitada = true;
+}
+
 // FUNÇÕES GET
 
 double getVerticeViaX(VerticeVia vv){
@@ -115,14 +125,4 @@ double getVerticeViaY(VerticeVia vv){
 
 bool isArestaEnabled(ArestaVia av){
     return ((ArestaViaStr*)av)->habilitada;
-}
-
-// FUNÇÕES SET
-
-void blockAresta(ArestaVia av){
-    ((ArestaViaStr*)av)->habilitada = false;
-}
-
-void unblockAresta(ArestaVia av){
-    ((ArestaViaStr*)av)->habilitada = true;
 }

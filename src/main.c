@@ -38,11 +38,11 @@ int main(int argc, char* argv[]){
 
     /*
         Pega todos os nomes e GEOs dos arquivos base e organiza na variável paths
-        paths[0] = entrada (opcional)
-        paths[1] = saida (obrigatório)
-        paths[2] = GEO (obrigatório)
-        paths[3] = query (opcional)
-        paths[4] = VIA (opcional)
+        paths[0] = (-e) entrada      (opcional)
+        paths[1] = (-o) saida        (obrigatório)
+        paths[2] = (-f) GEO          (obrigatório)
+        paths[3] = (-q) query        (opcional)
+        paths[4] = (-v) VIA          (opcional)
     */
     for(int i = 1; i < argc; i += 2){
         for(int j = 0; j < 5; j++){
@@ -82,14 +82,13 @@ int main(int argc, char* argv[]){
     paths[GEO] = newPathGeo;
 
     // Coloca ".via" no arquivo via caso ele exista e não tenha
-    if (paths[VIA]) {
+    if(paths[VIA]){
         char* newPathVia = (char*)changeExtension(paths[VIA], ".via");
         free(paths[VIA]);
         paths[VIA] = newPathVia;
     }
 
-    
-    // Todos os parâmetros fornecidos:
+    // Lista todos os parâmetros fornecidos:
     printf("%-12s: %s\n", "Entrada", paths[ENTRADA]);
     printf("%-12s: %s\n", "Saida",   paths[SAIDA]);
     printf("%-12s: %s\n", "Arquivo Geo", paths[GEO]);

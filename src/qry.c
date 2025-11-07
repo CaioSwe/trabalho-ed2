@@ -51,7 +51,7 @@ static void bloquearSentido(Item item, void* extra){
 static void desbloquearSentido(Item item, void* extra){
     char* sentido = (char*)extra;
 
-
+    //
 
     // desbloquearArestas(item, sentido);
     // ou alguma coisa assim

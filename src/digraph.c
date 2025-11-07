@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "fileManager.h"
+
 // CHECAR ALOCAÇÃO
 // CHECAR ALOCAÇÃO
 // CHECAR ALOCAÇÃO
@@ -35,51 +37,79 @@ typedef struct GraphStr{
     Lista* listaAdj;
 } GraphStr;
 
+// Cria um novo grafo.
 Graph createGraph(int nVert){
+    // Aloca espaco para o novo grafo.
     GraphStr* g = (GraphStr*)malloc(sizeof(GraphStr));
 
+    // Aloca espaco para os vertices.
     g->vertices = (Vert*)malloc(nVert * sizeof(Vert));
+    // Aloca espaco para a lista de adjacencia.
     g->listaAdj = (Lista)malloc(nVert * sizeof(Lista));
+    // Cria a tabela hash para associacao de nome-valor
     g->tabelaHash = criaHash(nVert, true);
 
+    // Seta a quantidade ma'xima de vertices, bem como os estados iniciais do nu'mero de ve'rtices e arestas.
     g->maxVert = nVert;
 
     g->nEdge = 0;
     g->nVert = 0;
 
+    // Retorna o grafo criado.
     return g;
 }
 
+// Retorna o nu'mero ma'ximo de ve'rtices.
 int getMaxNodes(Graph g){
     return ((GraphStr*)g)->maxVert;
 }
 
+// Retorna o nu'mero de ve'rtices atuais.
 int getTotalNodes(Graph g){
     return ((GraphStr*)g)->nVert;
 }
 
+// Adiciona um ve'rtice no grafo com nome e informacao associada.
 Node addNode(Graph g, char* nome, Info info){
     GraphStr* graph = (GraphStr*)g;
 
+    // Se o grafo tiver mais ve'rtices que ele suporta, lanca um erro e retorna -1.
     if(graph->nVert >= graph->maxVert){
-        printf("\n- addNode() -> Máximo número de vértices alcançado (%d). -", graph->maxVert);
+        printf("\n- addNode() -> Ma'ximo número de vértices alcançado (%d). -", graph->maxVert);
         return -1;
     }
 
+    // Aloca espaco para o novo ve'rtice.
     Vert* v = (Vert*)malloc(sizeof(Vert));
-    
+    if(checkAllocation(v, "Novo ve'rtice do grafo.")) return -1;
+
+    // Checa se nome ou info forem nulas.
+    if(nome == NULL || info == NULL){
+        printf("\n- addNode() -> Nome ou Info apresentam valores nulos. -");
+        free(v);
+        return -1;
+    }
+
+    // Aloca espaco para o nome do ve'rtice.
     v->nome = (char*)malloc(sizeof(char) * (strlen(nome) + 1));
+    if(checkAllocation(v->nome, "Nome do novo ve'rtice do grafo.")){
+        free(v);
+        return -1;
+    }
     strcpy(v->nome, nome);
-    
+
     v->info = info;
     
+    // Cria lista de adjacencia.
     graph->listaAdj[graph->nVert] = criaLista();
 
     int nVert = graph->nVert;
     
+    // Aloca um nVertp para a associacao do indice da lista.
     int* nVertp = (int*)malloc(sizeof(int));
     *nVertp = nVert;
 
+    // Guarda a informacao do indice com nome na tabela Hash do grafo.
     inserirHash(graph->tabelaHash, v->nome, nVertp);
 
     graph->vertices[graph->nVert].nome = v->nome;

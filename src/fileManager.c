@@ -70,3 +70,12 @@ const char* strcatcat(const char* cat1, const char* cat2){
     // Retorna a string concatenada.
     return (const char*)resultCat;
 }
+
+bool checkAllocation(void* var, const char* text){
+    // Caso a varia'vel passada for nula, lanca uma mensagem de erro.
+    if(var == NULL){
+        printf("\n[!] ERRO DE ALOCACAO: %s", text);
+        return true;
+    }
+    return false;
+}

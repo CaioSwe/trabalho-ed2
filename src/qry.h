@@ -6,7 +6,8 @@
 #include "digraph.h"
 
 /*
-    MUDAR ALGUMAS COISINHAS BOBAS
+    TERMINAR A IMPLEMENTACAO DA STREAP PARA TESTE FINAL.
+    TERMINAR IMPLEMENTACAO DO removerQuadras E desbloquearSentido.
 */
 
 /**
