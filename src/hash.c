@@ -5,8 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "fileManager.h"
-
 typedef struct HashCel{
     char* chave;
     HashItem valor;
@@ -20,6 +18,8 @@ typedef struct HashStr{
 } HashStr;
 
 static bool isPrimo(int v){
+    if(v < 2) return false;
+
     int raizV = sqrt(v);
     for(int i = 2; i <= raizV; i++){
         if(v % i == 0) return false;
@@ -35,6 +35,11 @@ static int proxPrimo(int v){
 }
 
 Hash criaHash(int tam, bool gerarPrimo){
+    if(tam < 1){
+        printf("\n - criaHash() -> Tamanho passado para criacao da tabela Hash invalido.");
+        return NULL;
+    }
+
     // Aloca uma nova tabela hash.
     HashStr* tabelaHash = (HashStr*)malloc(sizeof(HashStr));
     if(checkAllocation(tabelaHash, "Tabela Hash.")) return NULL;
@@ -145,7 +150,7 @@ HashItem getHashValue(Hash hash, const char* nome){
     return NULL;
 }
 
-void destroiHash(Hash hash, freeFunc fFunc){
+void destroiHash(Hash hash, freeFunc fFunc, void* extra){
     if(hash == NULL){
         printf("\n - destroiHash() -> Tabela hash apresenta valor nulo. -");
         return;
@@ -168,7 +173,7 @@ void destroiHash(Hash hash, freeFunc fFunc){
 
             free(cel->chave);
 
-            if(fFunc != NULL) fFunc(cel->valor);
+            if(fFunc != NULL) fFunc(cel->valor, extra);
 
             free(cel);
 

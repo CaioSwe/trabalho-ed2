@@ -4,6 +4,8 @@
 #include "geo.h"
 #include "lista.h"
 
+#include "digraph.h"
+
 /**
  * @brief Coloca a quadra especificada no arquivo file.
  * 
@@ -22,6 +24,10 @@ void printQuadrasToSVG(Quadra quadra, void* file);
  */
 void printVerticesToSVG(Item item, void* file);
 
+void printEdgesToSVG(Item item, void* extra);
+
 // ADAPT: void printToTXT(const void* item, const void* file, const void* aux);
+
+// void printToTXT(Item item, void* extra);
 
 #endif

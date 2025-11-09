@@ -4,6 +4,14 @@
 #include <stdbool.h>
 
 /**
+ * @brief Funcao de liberacao de um item qualquer.
+ * @return Nao ha' retorno de algum valor.
+ */
+typedef void (*freeFunc) (void* item, void* extra);
+
+void freeReg(void* item, void* extra);
+
+/**
  * @brief Altera a extensao de um arquivo.
  * @param path String original com um caractere '.' presente.
  * @param ext Nova extensao que sera' aplicada no path.

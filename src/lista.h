@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "fileManager.h"
+
 /**
  * Cabeçalho dedicado à estrura "Lista" que têm como princípio
  * a inserção e remoção de qualquer elemento em qualquer posição
@@ -12,6 +14,8 @@
 
 typedef void* Lista;
 typedef void* Item;
+
+// Ponteiro de funcao freeFunc esta' no cabecalho "fileManager.h".
 
 /**
  * @brief Compara dois itens e verifica sua igualdade.
@@ -62,8 +66,6 @@ void inserirFim(Lista lista, Item item);
  */
 Item removerInicio(Lista lista);
 
-//Item removerMeio(Lista, Item);
-
 /**
  * @brief Remove o último item da lista.
  * @param lista Lista genérica escolhida para remoção do item.
@@ -96,12 +98,15 @@ int listaTamanho(Lista lista);
 
 /**
  * @brief Mapeia os itens de uma lista para uma outra depois de aplicada uma dada função.
+ * 
+ * AVISO: RECOMENDADO LIMPAR A LISTA 'TO' ANTES DE MAPEAR!
  * @param from Lista genérica da origem dos itens de mapeamento.
  * @param to Lista genérica de destino dos itens de mapeamento.
  * @param mapFunc Ponteiro de função que aplica uma operação qualquer nos itens.
+ * @param itemSize Tamanho em bytes de um item 'a ser armazenado na lista to.
  * @return Não há retorno de algum valor.
  */
-void mapTo(Lista from, Lista to, mapFunction mapFunc);
+void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize);
 
 /**
  * @brief Concatena duas listas.
@@ -138,31 +143,43 @@ bool isInLista(Lista lista, compararItens compFunc, Item item);
  */
 Item getItemLista(Lista lista, int index);
 
-// Fazer ficar mais claro a função
 
 /**
- * @brief Percorre a lista fornecida até o index do dado elemento.
- * @param lista Lista genérica para percorrer.
- * @param index Inteiro usado para indicar a posição do item.
- * @return Retorna o item posicionado no index fornecido.
+ * @brief Busca e retorna o item da lista que satisfaz a funcao de comparacao.
+ * @param lista Lista gene'rica para busca.
+ * @param compFunc Funcao de comparacao que define a condicao de igualdade.
+ * @param item Item usado como referencia para comparacao.
+ * @return Retorna o item encontrado caso exista, NULL caso contrário.
  */
 Item getItemListaI(Lista lista, compararItens compFunc, Item item);
 
 /**
  * @brief Limpa todos os elementos da lista especificada.
  * @param lista Lista genérica para limpeza.
- * @param limparItens Valor booleano: Verdadeiro (True) para liberar (free) itens da lista, Falso (False) caso não.
+ * @param freeFunc Ponteiro para uma funcao para liberar a memoria dos itens armazenados na lista. Caso seja nulo, nao libera os itens.
+ * @param extra Ponteiro para um item auxiliar a ser passada para a funcao freeFunc caso necessa'rio.
  * @return Não há retorno de algum valor.
  */
-void limparLista(Lista lista, bool limparItens);
+void limparLista(Lista lista, freeFunc fFunc, void* extra);
 
 /**
  * @brief Copia os itens de uma lista para uma outra lista.
- * @param from Lista genérica para cópia dos itens.
- * @param to Lista genérica para destino das cópias da lista from.
+ * 
+ * AVISO: RECOMENDADO LIMPAR A LISTA 'TO' ANTES DE COPIAR!
+ * @param from Lista gene'rica para cópia dos itens.
+ * @param to Lista genérica para destino das co'pias da lista from.
  * @param itemSize Tamanho em bytes dos itens da lista from.
- * @return Não há retorno de algum valor.
+ * @return Nao ha' retorno de algum valor.
  */
 void copyLista(Lista from, Lista to, size_t itemSize);
+
+/**
+ * @brief Destroi a lista passada.
+ * @param lista Lista genérica para ser destruida.
+ * @param freeFunc Ponteiro para uma funcao para liberar a memoria dos itens armazenados na lista. Caso seja nulo, nao libera os itens.
+ * @param extra Ponteiro para um item auxiliar a ser passada para a funcao freeFunc caso necessa'rio.
+ * @return Não há retorno de algum valor.
+ */
+void destroiLista(Lista l, freeFunc freeItens, void* extra);
 
 #endif

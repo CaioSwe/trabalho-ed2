@@ -25,4 +25,4 @@ via.o: via.c via.h
 main.o: main.c lista.h fileManager.h geo.h files.h digraph.h via.h
 
 clean:
-	rm -f $(OBJETOS) $(PROJ_NAME)
+	del /Q $(OBJETOS) $(PROJ_NAME).exe 2>nul || true

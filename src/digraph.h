@@ -52,6 +52,11 @@ int getMaxNodes(Graph g);
 int getTotalNodes(Graph g);
 
 /*
+    Retorna numero total de arestas adicionadas ao grafo gr.
+*/
+int getTotalEdges(Graph g);
+
+/*
     Adiciona um novo vértice ao grafo "g" com o nome "nome".
 */
 Node addNode(Graph g, char* nome, Info info);
@@ -109,7 +114,7 @@ void setEdgeInfo(Graph g, Edge e, Info info);
 /*
     Remove a aresta E do grafo g.
 */
-void removeEdge(Graph g, Edge e);
+void removeEdge(Graph g, Edge e, freeFunc freeEdgeFunc);
 
 /*
     Retorna um valor booleano, true se a origem From e o destino To sao adjacentes, false caso contr'ario.
@@ -159,6 +164,6 @@ bool bfs(Graph g, Node node, procEdge discoverNode, void *extra);
 /*
     Destroi o grafo g.
 */
-void killDG(Graph g);
+void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc);
 
 #endif

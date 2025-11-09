@@ -17,10 +17,10 @@ Graph processViaFile(const char* path);
 // FUNCOES SET
 
 // Desabilita a aresta.
-void blockAresta(ArestaVia av);
+void blockVia(ArestaVia av);
 
 // Habilita a aresta.
-void unblockAresta(ArestaVia av);
+void unblockVia(ArestaVia av);
 
 // FUNCOES GET
 
@@ -33,5 +33,7 @@ double getVerticeViaY(VerticeVia vv);
 // Retorna o valor booleano do estado da aresta.
 bool isArestaEnabled(ArestaVia av);
 
+// Libera a memoria alocada para as vias de arestas.
+void freeArestaVia(ArestaVia av, void* extra);
 
 #endif

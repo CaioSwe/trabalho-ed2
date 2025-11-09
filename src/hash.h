@@ -2,6 +2,7 @@
 #define _HASH_h_
 
 #include <stdbool.h>
+#include "fileManager.h"
 
 /**
  * Mo'dulo especializado para a implementacao da tabela de espalhamento (Hash Table).
@@ -16,11 +17,7 @@
 typedef void* Hash;
 typedef void* HashItem;
 
-/**
- * @brief Funcao de liberacao de um item da tabela.
- * @return Nao ha' retorno de algum valor.
- */
-typedef void (*freeFunc) (HashItem hashItem);
+// Ponteiro de funcao freeFunc esta' no cabecalho "fileManager.h".
 
 /**
  * @brief Cria uma tabela Hash (espalhamento).
@@ -51,8 +48,9 @@ HashItem getHashValue(Hash hash, const char* nome);
  * @brief Destroi a tabela Hash especificada.
  * @param hash Tabela hash a ser destrui'da.
  * @param fFunc Ponteiro para um funcao de liberacao para os valores inseridos na tabela.
+ * @param extra Ponteiro para um item auxiliar a ser passada para a funcao freeFunc caso necessa'rio.
  * @return Nao ha' retorno de algum valor.
  */
-void destroiHash(Hash hash, freeFunc fFunc);
+void destroiHash(Hash hash, freeFunc fFunc, void* extra);
 
 #endif

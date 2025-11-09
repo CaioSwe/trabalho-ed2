@@ -29,6 +29,13 @@ typedef struct BloqueioStr{
     char* bloqueio;
 }BloqueioStr;
 
+static void freeBloqueio(void* bloqueio, void* extra){
+    BloqueioStr* bloqueiostr = (BloqueioStr*)bloqueio;
+
+    destroiLista(bloqueiostr->lista, freeReg, NULL);
+    free(bloqueiostr->bloqueio);
+}
+
 // Desabilitar as todas as arestas que (estao dentro / cruzam) a regiao especificada.
 static void removerQuadras(Item item, void* extra){
     // desabillitarArestas(item);
@@ -60,7 +67,7 @@ static void desbloquearSentido(Item item, void* extra){
 Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* path){
     // Checa se o caminho dado contam a extensao .qry
     if(strstr(path, ".qry") == NULL){
-        printf("\n- processQryFile() -> path: \"%s\" nao a um arquivo .qry -", path);
+        printf("\n- processQryFile() -> path: \"%s\" nao e' um arquivo .qry -", path);
         return NULL;
     }
 
@@ -99,6 +106,10 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
     Hash tabelaHash = criaHash(256, true);
 
     Percurso* percurso = (Percurso*)malloc(sizeof(Percurso));
+    if(checkAllocation(percurso, "Estrutura de percurso.")){
+        destroiHash(tabelaHash, freeBloqueio, NULL);
+        return NULL;
+    }
 
     percurso->origem = NULL;
     percurso->destino = NULL;
@@ -113,6 +124,11 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             Node node = getNode(grafo, cep);
 
             percurso->origem = (Ponto*)malloc(sizeof(Ponto));
+            if(checkAllocation(percurso->origem, "Ponto de origem do percurso.")){
+                destroiHash(tabelaHash, freeBloqueio, NULL);
+                free(percurso);
+                return NULL;
+            }
 
             // Registra as informacoes do node encontrado na origem do percurso.
             percurso->origem->node = node;
@@ -130,7 +146,7 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             // Percorre a lista das quadras da regiao, desabilitando-as.
             percorrerLista(lista, removerQuadras, NULL);
 
-            limparLista(lista, false);
+            limparLista(lista, NULL, NULL);
         }
         else if(strcmp(op, "pnt") == 0){
             // Pega [cep, cfill, cstrk] da operacao de paint.
@@ -157,8 +173,22 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
 
             // Inicializa a estrutura de bloqueios a ser armazenada na tabela Hash.
             BloqueioStr* listaBlq = (BloqueioStr*)malloc(sizeof(BloqueioStr));
+            if(checkAllocation(listaBlq, "Estrutura de bloqueios.")){
+                if(percurso->origem) free(percurso->origem);
+                destroiHash(tabelaHash, freeBloqueio, NULL);
+                free(percurso);
+                return NULL;
+            }
 
             listaBlq->bloqueio = (char*)malloc(sizeof(char) * strlen(sentido));
+            if(checkAllocation(listaBlq->bloqueio, "String de sentido do bloqueio.")){
+                if(percurso->origem) free(percurso->origem);
+                free(listaBlq);
+                destroiHash(tabelaHash, freeBloqueio, NULL);
+                free(percurso);
+                return NULL;
+            }
+
             strcpy(listaBlq->bloqueio, sentido);
             
             listaBlq->lista = lista;
@@ -188,13 +218,19 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
         else if(strcmp(op, "p?") == 0){
             // Pega [cep, face, num, cmc, cmr] da operacao de percurso.
             fscanf(fEntrada, "%s %c %d %s %s\n", cep, &face, &num, cmc, cmr);
-
+            
             if(percurso->origem == NULL){
-                printf("\n- processQryFile() -> ponto de origem nao definido antes da operacao \"(p?)\". -");
+                printf("\n- processQryFile() -> ponto de origem nao definido antes da operacao 'p?'. -");
                 continue;
             }
 
             percurso->destino = (Ponto*)malloc(sizeof(Ponto));
+            if(checkAllocation(percurso->destino, "Ponto de destino do percurso.")){
+                if(percurso->origem) free(percurso->origem);
+                destroiHash(tabelaHash, freeBloqueio, NULL);
+                free(percurso);
+                return NULL;
+            }
 
             percurso->destino->node = getNode(grafo, cep);
             percurso->destino->face = face;

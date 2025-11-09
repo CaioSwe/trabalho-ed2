@@ -58,6 +58,11 @@ int main(int argc, char* argv[]){
     if(paths[ENTRADA] == NULL){
         free(paths[ENTRADA]);
         paths[ENTRADA] = (char*)malloc(sizeof(char) * (strlen("./") + 1));
+        if(checkAllocation(paths[ENTRADA], "String do caminho de entrada.")){
+            for(int i = 1; i < 5; i++) free(paths[i]);
+            free(paths);
+            return 1;
+        }
         strcpy(paths[ENTRADA], "./");
     }
 
@@ -69,8 +74,12 @@ int main(int argc, char* argv[]){
     
     // Coloca '/' caso não tenha no final do path de entrada
     if(paths[ENTRADA][strlen(paths[ENTRADA]) - 1] != '/'){
-        size_t len = strlen(paths[ENTRADA]);
-        paths[ENTRADA] = realloc(paths[ENTRADA], len + 2);
+        paths[ENTRADA] = realloc(paths[ENTRADA], strlen(paths[ENTRADA]) + 2);
+        if(checkAllocation(paths[ENTRADA], "Realloc da string do caminho de entrada.")){
+            for(int i = 1; i < 5; i++) free(paths[i]);
+            free(paths);
+            return 1;
+        }
         strcat(paths[ENTRADA], "/");
     }
 
@@ -90,9 +99,9 @@ int main(int argc, char* argv[]){
 
     // Lista todos os parâmetros fornecidos:
     printf("%-12s: %s\n", "Entrada", paths[ENTRADA]);
-    printf("%-12s: %s\n", "Saida",   paths[SAIDA]);
+    printf("%-12s: %s\n", "Saida", paths[SAIDA]);
     printf("%-12s: %s\n", "Arquivo Geo", paths[GEO]);
-    printf("%-12s: %s\n", "Query",   paths[QUERY]);
+    printf("%-12s: %s\n", "Query", paths[QUERY]);
     printf("%-12s: %s\n", "Arquivo Via", paths[VIA]);
 
     // (2) Lendo o arquivo .geo
@@ -101,24 +110,29 @@ int main(int argc, char* argv[]){
     // Concatena o path de entrada e o nome do arquivo GEO para fEntradaPath
     const char* fEntradaPath = strcatcat(paths[ENTRADA], paths[GEO]);
 
-    Lista formas = processGeoFile(fEntradaPath);
+    Quadras formas = processGeoFile(fEntradaPath);
 
     // (3) Lendo o arquivo .via (se tiver)
     /////////////////////////////////////////////////////////////////
 
     Lista vertices = NULL;
+    Lista arestas = NULL;
+
+    Graph grafo = NULL;
 
     if(paths[VIA]){
         // Concatena o path de entrada e o nome do arquivo VIA para fViaPAth
         const char* fViaPath = strcatcat(paths[ENTRADA], paths[VIA]);
-
+        
         // Guarda as informações do arquivo .via em um grafo direcionado.
-        Graph grafo;
         grafo = processViaFile(fViaPath);
-
+        
         // Inicializa uma lista dos vertices do grafo G para visualização no SVG (opcional)
         vertices = criaLista();
         getAllVerticesInfo(grafo, vertices);
+
+        arestas = criaLista();
+        getEdges(grafo, arestas);
 
         // (3.1) Escreve a lista de adjacência de G em um TXT [v -> e]
         /////////////////////////////////////////
@@ -128,11 +142,20 @@ int main(int argc, char* argv[]){
 
         // Abre o diretório em modo de escrita
         FILE* fViaSaida = fopen(fOutputViaPath, "w");
-        printf("Escrevendo no arquivo: %s\n", fOutputViaPath);
+        printf("\nEscrevendo no arquivo: %s", fOutputViaPath);
+
+        // teste1* t = (teste1*)malloc(sizeof(teste1));
+        // t->file = fViaSaida;
+        // t->g = grafo;
 
         // ARRUMAR PARA: bfs ou dfs -> percorrerGrafoRel(grafo, printToTXT, fViaSaida);
 
         fclose(fViaSaida);
+
+        free((char*)fViaPath);
+        free((char*)fOutputViaPath);
+        //destroiLista(vertices, freeReg, NULL);
+        //killDG(grafo, freeReg, freeArestaVia);
     }
 
     // (4) Abre um arquivo .svg e coloca as formas adiquiridas do arquivo .geo
@@ -143,17 +166,28 @@ int main(int argc, char* argv[]){
     
     // Abre o diretório em modo de escrita
     FILE* fSaida = fopen(fOutputPath, "w");
-    printf("Escrevendo no arquivo: %s\n", fOutputPath);
+    printf("\nEscrevendo no arquivo: %s\n", fOutputPath);
 
     percorrerQuadras(formas, getMax, NULL);
 
     fprintf(fSaida, "<svg width=\"%.1f\" height=\"%.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX, maxY);
     percorrerQuadras(formas, printQuadrasToSVG, fSaida);
-    // Tire de comentário caso queria visualizar os vertices do grafo no SVG produzido pelo arquivo .via
-    // percorrerLista(vertices, printVerticesToSVG, fSaida);
+    // Tire de comenta'rio caso queria visualizar os vertices do grafo no SVG produzido pelo arquivo .via
+    percorrerLista(vertices, printVerticesToSVG, fSaida);
+
+    percorrerLista(arestas, printEdgesToSVG, fSaida);
+
     fprintf(fSaida, "</svg>");
 
     fclose(fSaida);
+
+    ////////////////////////////////////////////////
+    // SECAO DE LIBERACAO DE MEMORIA
+
+    freeQuadras(formas, NULL);
+
+    for(int i = 1; i < 5; i++) free(paths[i]);
+    free(paths);
 
     printf("\nPrograma finalizado com sucesso!\n");
 

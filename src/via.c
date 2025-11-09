@@ -59,6 +59,11 @@ Graph processViaFile(const char* path){
             fscanf(fEntrada, "%s %lf %lf", id, &x, &y);
 
             VerticeViaStr* VV = (VerticeViaStr*)malloc(sizeof(VerticeViaStr));
+            if(checkAllocation(VV, "Vertice-Via.")){
+                killDG(g, freeReg, freeArestaVia);
+                return NULL;
+            }
+
             VV->x = x;
             VV->y = y;
 
@@ -77,11 +82,26 @@ Graph processViaFile(const char* path){
             }
 
             ArestaViaStr* via = (ArestaViaStr*)malloc(sizeof(ArestaViaStr));
+            if(checkAllocation(via, "Aresta-Via.")){
+                killDG(g, freeReg, freeArestaVia);
+                return NULL;
+            }
 
             via->ldir = (char*)malloc(sizeof(char) * strlen(ldir) + 1);
+            if(checkAllocation(via->ldir, "Lado direito da aresta-via.")){
+                free(via);
+                killDG(g, freeReg, freeArestaVia);
+                return NULL;
+            }
             strcpy(via->ldir, ldir);
 
             via->lesq = (char*)malloc(sizeof(char) * strlen(lesq) + 1);
+            if(checkAllocation(via->lesq, "Lado esquerdo da aresta-via.")){
+                free(via->ldir);
+                free(via);
+                killDG(g, freeReg, freeArestaVia);
+                return NULL;
+            }
             strcpy(via->lesq, lesq);
 
             via->cmp = cmp;
@@ -90,14 +110,20 @@ Graph processViaFile(const char* path){
             // Via e' habilitada por padrao em sua criacao.
             via->habilitada = true;
 
-            addEdge(g, origem, destino, via);
+            Edge newEdge = addEdge(g, origem, destino, via);
+            if(newEdge == NULL){
+                printf("\n- processViaFile() -> Erro na criacao de nova aresta. -");
+                killDG(g, freeReg, freeArestaVia);
+                return NULL;
+            }
         }
     }
 
-    printf("\n");
-
     // Fecha o arquivo de entrada
     fclose(fEntrada);
+
+    printf("\nNumero de Vertices lidos: %d\n", getTotalNodes(g));
+    printf("Numero de Arestas lidas: %d\n", getTotalEdges(g));
 
     // Retorna o grafo inicializado com os vertices e arestas do .via
     return g;
@@ -105,11 +131,11 @@ Graph processViaFile(const char* path){
 
 // FUNÇÕES SET
 
-void blockAresta(ArestaVia av){
+void blockVia(ArestaVia av){
     ((ArestaViaStr*)av)->habilitada = false;
 }
 
-void unblockAresta(ArestaVia av){
+void unblockVia(ArestaVia av){
     ((ArestaViaStr*)av)->habilitada = true;
 }
 
@@ -125,4 +151,15 @@ double getVerticeViaY(VerticeVia vv){
 
 bool isArestaEnabled(ArestaVia av){
     return ((ArestaViaStr*)av)->habilitada;
+}
+
+// FREE
+
+void freeArestaVia(ArestaVia av, void* extra){
+    ArestaViaStr* arestaViav = (ArestaViaStr*)av;
+    
+    free(arestaViav->ldir);
+    free(arestaViav->lesq);
+
+    free(arestaViav);
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "geo.h"
+#include "fileManager.h"
 
 typedef struct QuadraStr{
     char* id; // Associação usada na tabela hash
@@ -26,7 +27,12 @@ static void inserirQuadrasHash(Item item, void* estrutura){
     QuadraStr* quadra = (QuadraStr*)item;
     QuadrasStr* quadras = (QuadrasStr*)estrutura;
 
-    inserirHash(quadras->tabelaHash, quadra->id, quadras->nQuadras);
+    int* nQuadrasp = (int*)malloc(sizeof(int));
+    if(checkAllocation(nQuadrasp, "Ponteiro do enderenco de Quadra.")) return;
+
+    *nQuadrasp = quadras->nQuadras;
+
+    inserirHash(quadras->tabelaHash, quadra->id, nQuadrasp);
 
     quadras->quadras[quadras->nQuadras].id = quadra->id;
     quadras->quadras[quadras->nQuadras].x = quadra->x;
@@ -77,9 +83,18 @@ Quadras processGeoFile(const char* path){
         else if(strcmp(op, "q") == 0){
             fscanf(fEntrada, "%s %lf %lf %lf %lf\n", id, &x, &y, &width, &height);
 
-            QuadraStr* quadra = malloc(sizeof(QuadraStr));
+            QuadraStr* quadra = (QuadraStr*)malloc(sizeof(QuadraStr));
+            if(checkAllocation(quadra, "Quadra.")){
+                limparLista(lista, freeQuadra, NULL);
+                return NULL;
+            }
 
-            quadra->id = malloc(sizeof(char) * strlen(id) + 1);
+            quadra->id = (char*)malloc(sizeof(char) * (strlen(id) + 1));
+            if(checkAllocation(quadra->id, "String de id da quadra.")){
+                free(quadra);
+                limparLista(lista, freeQuadra, NULL);
+                return NULL;
+            }
             strcpy(quadra->id, id);
 
             quadra->x = x;
@@ -87,32 +102,64 @@ Quadras processGeoFile(const char* path){
             quadra->width = width;
             quadra->height = height;
 
-            quadra->cfill = malloc(sizeof(char) * strlen(cfill) + 1);
+            quadra->cfill = (char*)malloc(sizeof(char) * (strlen(cfill) + 1));
+            if(checkAllocation(quadra->cfill, "Cor de preenchimento da quadra.")){
+                free(quadra->id);
+                free(quadra);
+                limparLista(lista, freeQuadra, NULL);
+                return NULL;
+            }
             strcpy(quadra->cfill, cfill);
-            quadra->cstrk = malloc(sizeof(char) * strlen(cstrk) + 1);
+
+            quadra->cstrk = (char*)malloc(sizeof(char) * (strlen(cstrk) + 1));
+            if(checkAllocation(quadra->cstrk, "Cor da borda da quadra.")){
+                free(quadra->cfill);
+                free(quadra->id);
+                free(quadra);
+                limparLista(lista, freeQuadra, NULL);
+                return NULL;
+            }
             strcpy(quadra->cstrk, cstrk);
-            quadra->sw = malloc(sizeof(char) * strlen(sw) + 1);
+
+            quadra->sw = (char*)malloc(sizeof(char) * (strlen(sw) + 1));
+            if(checkAllocation(quadra->sw, "Tamanho da borda da quadra.")){
+                free(quadra->cstrk);
+                free(quadra->cfill);
+                free(quadra->id);
+                free(quadra);
+                limparLista(lista, freeQuadra, NULL);
+                return NULL;
+            }
             strcpy(quadra->sw, sw);
 
             inserirFim(lista, quadra);
         }
     }
-
-    printf("\n");
-
+    
     // Fecha o arquivo de entrada
     fclose(fEntrada);
 
-    int nQuadras = listaTamanho(lista) + 1;
+    int nQuadras = listaTamanho(lista);
 
-    printf("\nNumero de quadras lidas: %d\n", nQuadras - 1);
+    printf("\nNumero de quadras lidas: %d\n", nQuadras);
 
     // Cria uma estrutura de quadras
     QuadrasStr* quadras = (QuadrasStr*)malloc(sizeof(QuadrasStr));
+    if(checkAllocation(quadras, "Quadras.")){
+        limparLista(lista, freeQuadra, NULL);
+        return NULL;
+    }
+
     quadras->nQuadras = 0;
     quadras->tabelaHash = criaHash(nQuadras, true);
 
     quadras->quadras = (QuadraStr*)malloc(nQuadras * sizeof(QuadraStr));
+    if(checkAllocation(quadras, "Array de quadras da estrutura 'quadras'.")){
+        destroiHash(quadras->tabelaHash, freeReg, NULL);
+        free(quadras);
+        limparLista(lista, freeQuadra, NULL);
+        return NULL;
+    }
 
     percorrerLista(lista, inserirQuadrasHash, quadras);
 
@@ -157,10 +204,10 @@ const char* getQuadraSW(Quadra quadra){
 Quadra getQuadraByID(Quadras quadras, const char* id){
     QuadrasStr* qs = (QuadrasStr*)quadras;
 
-    int index = (int)getHashValue(qs->tabelaHash, id);
-    if(index == -1) return NULL;
+    int* index = (int*)getHashValue(qs->tabelaHash, id);
+    if(index == NULL) return NULL;
 
-    return &(qs->quadras[index]);
+    return &(qs->quadras[*index]);
 }
 
 void setQuadraCFill(Quadra quadra, const char* cfill){
@@ -168,6 +215,8 @@ void setQuadraCFill(Quadra quadra, const char* cfill){
 
     free(q->cfill);
     q->cfill = malloc(sizeof(char) * (strlen(cfill) + 1));
+    if(checkAllocation(q->cfill, "Cor de preenchimento da quadra (set).")) return;
+
     strcpy(q->cfill, cfill);
 }
 
@@ -176,5 +225,29 @@ void setQuadraCStrk(Quadra quadra, const char* cstrk){
 
     free(q->cstrk);
     q->cstrk = malloc(sizeof(char) * (strlen(cstrk) + 1));
+    if(checkAllocation(q->cstrk, "Cor de borda da quadra (set).")) return;
+
     strcpy(q->cstrk, cstrk);
+}
+
+void freeQuadra(Quadra quadra, void* extra){
+    QuadraStr* q = (QuadraStr*)quadra;
+
+    free(q->cfill);
+    free(q->cstrk);
+    free(q->sw);
+    free(q->id);
+    free(q);
+}
+
+void freeQuadras(Quadras quadras, void* extra){
+    QuadrasStr* qs = (QuadrasStr*)quadras;
+
+    for(int i = 0; i < qs->nQuadras; i++){
+        freeQuadra(&qs->quadras[i], NULL);
+    }
+    free(qs->quadras);
+    destroiHash(qs->tabelaHash, freeReg, NULL);
+    
+    free(qs);
 }

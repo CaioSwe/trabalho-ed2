@@ -12,8 +12,8 @@ void printQuadrasToSVG(Quadra quadra, void* file){
     fprintf(arquivo, "<text x=\"%.1lf\" y=\"%.1lf\" dominant-baseline=\"hanging\">%s</text>", getQuadraX(quadra), getQuadraY(quadra), getQuadraID(quadra));
 }
 
-void printVerticesToSVG(Item item, void* extra){
-    FILE* arquivo = (FILE*)extra;
+void printVerticesToSVG(Item item, void* file){
+    FILE* arquivo = (FILE*)file;
 
     double x = getVerticeViaX(item);
     double y = getVerticeViaY(item);
@@ -21,12 +21,37 @@ void printVerticesToSVG(Item item, void* extra){
     fprintf(arquivo, " <circle cx=\"%.1lf\" cy=\"%.1lf\" r=\"5\" fill=\"blue\" />\n", x, y);
 }
 
-void printToTXT(const void* item, const void* file, const void* aux){
+void printEdgesToSVG(Item item, void* file){
     FILE* arquivo = (FILE*)file;
-    Graph g = (Graph)aux;
 
-    Edge e = (Edge)item;
-    Node node = getToNode(NULL, e);
+    Node f = getFromNode(NULL, item);
+    Node t = getToNode(NULL, item);
 
-    fprintf(arquivo, "%-20s, ", getNodeName(g, node));
+    Info infoF = getNodeInfo(NULL, f);
+    Info infoT = getNodeInfo(NULL, t);
+
+    double x1 = getVerticeViaX(infoF);
+    double y1 = getVerticeViaY(infoF);
+
+    double x2 = getVerticeViaX(infoT);
+    double y2 = getVerticeViaY(infoT);
+
+    fprintf(arquivo, "<line x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" style=\"stroke:red;stroke-width:2\"/>\n", x1, y1, x2, y2);
 }
+
+// typedef struct teste{
+//     Graph g;
+//     FILE* file;
+// }teste;
+
+// void printToTXT(Item item, void* extra){
+//     teste* t = (teste*)extra;
+    
+//     FILE* arquivo = t->file;
+//     Graph g = t->g;
+
+//     Edge e = (Edge)item;
+//     Node node = getToNode(NULL, e);
+
+//     fprintf(arquivo, "%-20s, ", getNodeName(g, node));
+// }

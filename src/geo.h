@@ -79,4 +79,11 @@ void setQuadraCFill(Quadra quadra, const char* cfill);
 // Define a cor de borda da quadra.
 void setQuadraCStrk(Quadra quadra, const char* cstrk);
 
+
+// Funcao de liberacao de memoria da quadra.
+void freeQuadra(Quadra quadra, void* extra);
+
+// Funcao de liberacao de memoria das quadras.
+void freeQuadras(Quadras quadras, void* extra);
+
 #endif
