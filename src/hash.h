@@ -23,18 +23,19 @@ typedef void* HashItem;
  * @brief Cria uma tabela Hash (espalhamento).
  * @param tam Tamanho da tabela 'a ser criada.
  * @param gerarPrimo Valor booleano: True -> Gera uma tabela de tamanho de pro'ximo primo ao valor tam (recomendado), False -> Gera uma tabela de tamanho tam.
+ * @param fPreenchimento Valor decimal (de 0 'a 1) que representa o fator ma'ximo de preenchimento da tabela.
  * @return Retorna um ponteiro para a tabela criada.
  */
-Hash criaHash(int tam, bool gerarPrimo);
+Hash criaHash(int tam, bool gerarPrimo, double fPreenchimento);
 
 /**
  * @brief Insere uma nova informacao na tabela Hash especificada.
  * @param hash Tabela hash a ser inserida um valor novo.
  * @param nome String a ser associada ao valor.
  * @param valor Ponteiro para um valor a ser associado ao nome especificado.
- * @return Nao ha' retorno de algum valor.
+ * @return Retorna o ponteiro para a tabela hash caso houve realocacao do tamanho da tabela.
  */
-void inserirHash(Hash hash, const char* nome, HashItem valor);
+Hash inserirHash(Hash hash, const char* nome, HashItem valor);
 
 /**
  * @brief Pega o valor associado ao nome na tabela Hash especificada.
@@ -52,5 +53,9 @@ HashItem getHashValue(Hash hash, const char* nome);
  * @return Nao ha' retorno de algum valor.
  */
 void destroiHash(Hash hash, freeFunc fFunc, void* extra);
+
+// DEBUG FUNCTIONS
+
+void imprimirHash(Hash hash, printFunc pFunc);
 
 #endif

@@ -9,6 +9,8 @@
  */
 typedef void (*freeFunc) (void* item, void* extra);
 
+typedef char* (*printFunc) (void* item, void* extra);
+
 void freeReg(void* item, void* extra);
 
 /**

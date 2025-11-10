@@ -32,7 +32,7 @@ static void inserirQuadrasHash(Item item, void* estrutura){
 
     *nQuadrasp = quadras->nQuadras;
 
-    inserirHash(quadras->tabelaHash, quadra->id, nQuadrasp);
+    quadras->tabelaHash = inserirHash(quadras->tabelaHash, quadra->id, nQuadrasp);
 
     quadras->quadras[quadras->nQuadras].id = quadra->id;
     quadras->quadras[quadras->nQuadras].x = quadra->x;
@@ -151,7 +151,7 @@ Quadras processGeoFile(const char* path){
     }
 
     quadras->nQuadras = 0;
-    quadras->tabelaHash = criaHash(nQuadras, true);
+    quadras->tabelaHash = criaHash((int)(nQuadras * 1.5f), true, 1.0f);
 
     quadras->quadras = (QuadraStr*)malloc(nQuadras * sizeof(QuadraStr));
     if(checkAllocation(quadras, "Array de quadras da estrutura 'quadras'.")){

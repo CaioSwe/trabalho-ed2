@@ -32,6 +32,15 @@ void getMax(Quadra quadra, void* extra){
     if(itemH > maxY) maxY = itemH;
 }
 
+char* hashPrintInt(void* item, void* extra){
+    int* intp = (int*)item;
+    
+    char* str = malloc(12);
+
+    if (str != NULL) sprintf(str, "%d", *intp);
+    return str;
+}
+
 int main(int argc, char* argv[]){
     char* flags[5] = {"-e", "-o", "-f", "-q", "-v"};
     char** paths = calloc(5, sizeof(char*));

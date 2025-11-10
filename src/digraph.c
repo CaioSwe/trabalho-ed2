@@ -76,7 +76,7 @@ Graph createGraph(int nVert){
     }
 
     // Cria a tabela hash para associacao de nome-valor
-    g->tabelaHash = criaHash(nVert, true);
+    g->tabelaHash = criaHash(nVert, true, 0.75f);
 
     // Seta a quantidade ma'xima de vertices, bem como os estados iniciais do nu'mero de ve'rtices e arestas.
     g->maxVert = nVert;
@@ -155,7 +155,7 @@ Node addNode(Graph g, char* nome, Info info){
     *nVertp = nVert;
 
     // Guarda a informacao do indice com nome na tabela Hash do grafo.
-    inserirHash(graph->tabelaHash, graph->vertices[graph->nVert].nome, nVertp);
+    graph->tabelaHash = inserirHash(graph->tabelaHash, graph->vertices[graph->nVert].nome, nVertp);
 
     graph->nVert += 1;
 

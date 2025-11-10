@@ -14,6 +14,8 @@ typedef struct HashCel{
 
 typedef struct HashStr{
     int tam;
+    int qPreenchida;
+    double fPreenchimento;
     HashCel** balde;
 } HashStr;
 
@@ -34,7 +36,7 @@ static int proxPrimo(int v){
     return v;
 }
 
-Hash criaHash(int tam, bool gerarPrimo){
+Hash criaHash(int tam, bool gerarPrimo, double fPreenchimento){
     if(tam < 1){
         printf("\n - criaHash() -> Tamanho passado para criacao da tabela Hash invalido.");
         return NULL;
@@ -59,6 +61,10 @@ Hash criaHash(int tam, bool gerarPrimo){
         tabelaHash->balde[i] = NULL;
     }
 
+    // Atribui o fator de preenchimento maximo da tabela.
+    tabelaHash->fPreenchimento = fPreenchimento;
+    tabelaHash->qPreenchida = 0;
+
     // Retorna a tabela Hash criada.
     return tabelaHash;
 }
@@ -78,15 +84,40 @@ static int hashIndex(const char* nome, int tam){
     return hashFunction(nome) % tam;
 }
 
-void inserirHash(Hash hash, const char* nome, HashItem valor){
+static Hash checkHashLimit(Hash hash){
+    if(hash == NULL){
+        printf("\n - getHashValue() -> Tabela passada apresenta valor nulo. -");
+        return NULL;
+    }
+
+    HashStr* tabelaHash = (HashStr*)hash;
+
+    // Verifica se o fator de preenchimento foi alcancado.
+    if(tabelaHash->qPreenchida >= (int)(tabelaHash->tam * tabelaHash->fPreenchimento)){
+
+        Hash newHash = criaHash(tabelaHash->tam * 2, true, tabelaHash->fPreenchimento);
+
+        for(int i = 0; i < tabelaHash->tam; i++){
+            if(tabelaHash->balde[i] == NULL) continue;
+            newHash = inserirHash(newHash, tabelaHash->balde[i]->chave, tabelaHash->balde[i]->valor);
+        }
+
+        destroiHash(tabelaHash, NULL, NULL);
+        return newHash;
+    }
+
+    return hash;
+}
+
+Hash inserirHash(Hash hash, const char* nome, HashItem valor){
     if(hash == NULL){
         printf("\n - inserirHash() -> Tabela passada apresenta valor nulo. -");
-        return;
+        return NULL;
     }
 
     if(nome == NULL || valor == NULL){
         printf("\n - inserirHash() -> Nome ou valor apresentam valores nulos.");
-        return;
+        return hash;
     }
 
     HashStr* tabelaHash = (HashStr*)hash;
@@ -100,19 +131,19 @@ void inserirHash(Hash hash, const char* nome, HashItem valor){
         // Atualiza o valor da chave se encontrar a chave na estrutura.
         if(strcmp(hashCel->chave, nome) == 0){
             hashCel->valor = valor;
-            return;
+            return hash;
         }
     }
     
     // Caso não esteja, aloca uma nova célula da tabela na posição hashIndex.
     HashCel* newHashCel = (HashCel*)malloc(sizeof(HashCel));
-    if(checkAllocation(newHashCel, "Nova ce'lula da tabela Hash.")) return;
+    if(checkAllocation(newHashCel, "Nova ce'lula da tabela Hash.")) return hash;
 
     // Aloca nome da nova ce'lula da tabela.
     newHashCel->chave = (char*)malloc(strlen(nome) + 1);
     if(checkAllocation(newHashCel->chave, "Nome da nova ce'lula da tabela Hash.")){
         free(newHashCel);
-        return;
+        return hash;
     }
     strcpy(newHashCel->chave, nome);
     
@@ -122,6 +153,10 @@ void inserirHash(Hash hash, const char* nome, HashItem valor){
     // Configura o ponteiro para o pro'ximo indice da tabela.
     newHashCel->prox = tabelaHash->balde[i];
     tabelaHash->balde[i] = newHashCel;
+
+    tabelaHash->qPreenchida += 1;
+
+    return checkHashLimit(tabelaHash);
 }
 
 HashItem getHashValue(Hash hash, const char* nome){
@@ -156,10 +191,10 @@ void destroiHash(Hash hash, freeFunc fFunc, void* extra){
         return;
     }
 
-    if(fFunc == NULL){
-        printf("\n - destroiHash() -> Funcao de limpeza apresenta valor nulo. -");
-        return;
-    }
+    // if(fFunc == NULL){
+    //     printf("\n - destroiHash() -> Funcao de limpeza apresenta valor nulo. -");
+    //     return;
+    // }
 
     HashStr* tabelaHash = (HashStr*)hash;
 
@@ -184,4 +219,16 @@ void destroiHash(Hash hash, freeFunc fFunc, void* extra){
     // Libera o array de ce'lulas e a pro'pria tabela Hash.
     free(tabelaHash->balde);
     free(tabelaHash);
+}
+
+// DEBUG FUNCTIONS
+
+void imprimirHash(Hash hash, printFunc pFunc){
+    HashStr* tabelaHash = (HashStr*)hash;
+
+    for(int i = 0; i < tabelaHash->tam; i++){
+        if(tabelaHash->balde[i] == NULL) continue;
+
+        printf("\n [%d]: %s : %s", i, tabelaHash->balde[i]->chave, pFunc(tabelaHash->balde[i]->valor, NULL));
+    }
 }

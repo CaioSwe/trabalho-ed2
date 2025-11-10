@@ -103,7 +103,7 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
     char cmr[256];
 
     // Cria uma tabela Hash para a associacao de nome-lista para os comandos de bloqueio de remocao de bloqueio.
-    Hash tabelaHash = criaHash(256, true);
+    Hash tabelaHash = criaHash(50, true, 0.75f);
 
     Percurso* percurso = (Percurso*)malloc(sizeof(Percurso));
     if(checkAllocation(percurso, "Estrutura de percurso.")){
@@ -194,7 +194,7 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             listaBlq->lista = lista;
 
             // Insere a lista das quadras na tabela Hash para busca do comando [rbl].
-            inserirHash(tabelaHash, nome, listaBlq);
+            tabelaHash = inserirHash(tabelaHash, nome, listaBlq);
         }
         else if(strcmp(op, "rbl") == 0){
             // Pega [nome] da operacao de remocao de bloqueio.
