@@ -33,9 +33,9 @@ Hash criaHash(int tam, bool gerarPrimo, double fPreenchimento);
  * @param hash Tabela hash a ser inserida um valor novo.
  * @param nome String a ser associada ao valor.
  * @param valor Ponteiro para um valor a ser associado ao nome especificado.
- * @return Retorna o ponteiro para a tabela hash caso houve realocacao do tamanho da tabela.
+ * @return Nao ha' retorno de algum valor.
  */
-Hash inserirHash(Hash hash, const char* nome, HashItem valor);
+void inserirHash(Hash hash, const char* nome, HashItem valor);
 
 /**
  * @brief Pega o valor associado ao nome na tabela Hash especificada.

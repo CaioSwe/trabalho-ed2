@@ -84,40 +84,38 @@ static int hashIndex(const char* nome, int tam){
     return hashFunction(nome) % tam;
 }
 
-static Hash checkHashLimit(Hash hash){
+static void checkHashLimit(Hash hash){
     if(hash == NULL){
         printf("\n - getHashValue() -> Tabela passada apresenta valor nulo. -");
-        return NULL;
+        return;
     }
 
     HashStr* tabelaHash = (HashStr*)hash;
 
     // Verifica se o fator de preenchimento foi alcancado.
     if(tabelaHash->qPreenchida >= (int)(tabelaHash->tam * tabelaHash->fPreenchimento)){
-
+        Hash antigaHash = tabelaHash;
         Hash newHash = criaHash(tabelaHash->tam * 2, true, tabelaHash->fPreenchimento);
 
         for(int i = 0; i < tabelaHash->tam; i++){
             if(tabelaHash->balde[i] == NULL) continue;
-            newHash = inserirHash(newHash, tabelaHash->balde[i]->chave, tabelaHash->balde[i]->valor);
+            inserirHash(newHash, tabelaHash->balde[i]->chave, tabelaHash->balde[i]->valor);
         }
 
-        destroiHash(tabelaHash, NULL, NULL);
-        return newHash;
+        tabelaHash = newHash;
+        //destroiHash(antigaHash, NULL, NULL);
     }
-
-    return hash;
 }
 
-Hash inserirHash(Hash hash, const char* nome, HashItem valor){
+void inserirHash(Hash hash, const char* nome, HashItem valor){
     if(hash == NULL){
         printf("\n - inserirHash() -> Tabela passada apresenta valor nulo. -");
-        return NULL;
+        return;
     }
 
     if(nome == NULL || valor == NULL){
         printf("\n - inserirHash() -> Nome ou valor apresentam valores nulos.");
-        return hash;
+        return;
     }
 
     HashStr* tabelaHash = (HashStr*)hash;
@@ -131,19 +129,19 @@ Hash inserirHash(Hash hash, const char* nome, HashItem valor){
         // Atualiza o valor da chave se encontrar a chave na estrutura.
         if(strcmp(hashCel->chave, nome) == 0){
             hashCel->valor = valor;
-            return hash;
+            return;
         }
     }
     
     // Caso não esteja, aloca uma nova célula da tabela na posição hashIndex.
     HashCel* newHashCel = (HashCel*)malloc(sizeof(HashCel));
-    if(checkAllocation(newHashCel, "Nova ce'lula da tabela Hash.")) return hash;
+    if(checkAllocation(newHashCel, "Nova ce'lula da tabela Hash.")) return;
 
     // Aloca nome da nova ce'lula da tabela.
     newHashCel->chave = (char*)malloc(strlen(nome) + 1);
     if(checkAllocation(newHashCel->chave, "Nome da nova ce'lula da tabela Hash.")){
         free(newHashCel);
-        return hash;
+        return;
     }
     strcpy(newHashCel->chave, nome);
     
@@ -156,7 +154,7 @@ Hash inserirHash(Hash hash, const char* nome, HashItem valor){
 
     tabelaHash->qPreenchida += 1;
 
-    return checkHashLimit(tabelaHash);
+    checkHashLimit(tabelaHash);
 }
 
 HashItem getHashValue(Hash hash, const char* nome){

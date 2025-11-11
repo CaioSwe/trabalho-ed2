@@ -54,7 +54,7 @@ Graph processViaFile(const char* path){
     Graph g = createGraph(nVert);
 
     // Itera sobre as linhas do arquivo .via
-    while (fscanf(fEntrada, " %c", &op) == 1){
+    while(fscanf(fEntrada, " %c", &op) == 1){
         if(op == 'v'){
             fscanf(fEntrada, "%s %lf %lf", id, &x, &y);
 

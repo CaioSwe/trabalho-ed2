@@ -6,6 +6,11 @@
 
 #include "digraph.h"
 
+typedef struct teste1{
+    FILE* file;
+    Graph grafo;
+}teste1;
+
 /**
  * @brief Coloca a quadra especificada no arquivo file.
  * 

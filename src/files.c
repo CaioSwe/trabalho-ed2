@@ -22,13 +22,16 @@ void printVerticesToSVG(Item item, void* file){
 }
 
 void printEdgesToSVG(Item item, void* file){
-    FILE* arquivo = (FILE*)file;
+    teste1* t1 = (teste1*)file;
+
+    FILE* arquivo = t1->file;
+    Graph g = t1->grafo;
 
     Node f = getFromNode(NULL, item);
     Node t = getToNode(NULL, item);
 
-    Info infoF = getNodeInfo(NULL, f);
-    Info infoT = getNodeInfo(NULL, t);
+    Info infoF = getNodeInfo(g, f);
+    Info infoT = getNodeInfo(g, t);
 
     double x1 = getVerticeViaX(infoF);
     double y1 = getVerticeViaY(infoF);

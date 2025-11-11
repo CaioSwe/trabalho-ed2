@@ -179,12 +179,20 @@ int main(int argc, char* argv[]){
 
     percorrerQuadras(formas, getMax, NULL);
 
-    fprintf(fSaida, "<svg width=\"%.1f\" height=\"%.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX, maxY);
+    fprintf(fSaida, "<svg width=\"%.1f\" height=\"%.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX * 1.2f, maxY * 1.2f);
     percorrerQuadras(formas, printQuadrasToSVG, fSaida);
+    
+    // (4.1) OPCIONAL: Visualizacao do grafo no SVG.
     // Tire de comenta'rio caso queria visualizar os vertices do grafo no SVG produzido pelo arquivo .via
-    percorrerLista(vertices, printVerticesToSVG, fSaida);
+    /////////////////////////////////////////
 
-    percorrerLista(arestas, printEdgesToSVG, fSaida);
+    teste1* t = (teste1*)malloc(sizeof(teste1));
+    
+    t->file = fSaida;
+    t->grafo = grafo;
+    
+    //percorrerLista(vertices, printVerticesToSVG, fSaida);
+    percorrerLista(arestas, printEdgesToSVG, t);
 
     fprintf(fSaida, "</svg>");
 
@@ -197,7 +205,7 @@ int main(int argc, char* argv[]){
 
     for(int i = 1; i < 5; i++) free(paths[i]);
     free(paths);
-
+    
     printf("\nPrograma finalizado com sucesso!\n");
 
     return 0;

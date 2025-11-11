@@ -155,7 +155,7 @@ Node addNode(Graph g, char* nome, Info info){
     *nVertp = nVert;
 
     // Guarda a informacao do indice com nome na tabela Hash do grafo.
-    graph->tabelaHash = inserirHash(graph->tabelaHash, graph->vertices[graph->nVert].nome, nVertp);
+    inserirHash(graph->tabelaHash, graph->vertices[graph->nVert].nome, nVertp);
 
     graph->nVert += 1;
 
@@ -170,6 +170,7 @@ Node getNode(Graph g, char* nome){
 
     GraphStr* graph = (GraphStr*)g;
     int* valuep = getHashValue(graph->tabelaHash, nome);
+
     return (valuep ? *valuep : -1);
 }
 
@@ -284,6 +285,7 @@ Node getFromNode(Graph g, Edge e){
     }
 
     EdgeStr* edge = (EdgeStr*)e;
+
     return edge->from;
 }
  

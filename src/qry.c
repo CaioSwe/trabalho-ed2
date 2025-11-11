@@ -194,7 +194,7 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             listaBlq->lista = lista;
 
             // Insere a lista das quadras na tabela Hash para busca do comando [rbl].
-            tabelaHash = inserirHash(tabelaHash, nome, listaBlq);
+            inserirHash(tabelaHash, nome, listaBlq);
         }
         else if(strcmp(op, "rbl") == 0){
             // Pega [nome] da operacao de remocao de bloqueio.
