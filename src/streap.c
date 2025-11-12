@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <time.h>
+
 // #include <graphviz/gvc.h>
 // #include <graphviz/cgraph.h>
 
@@ -47,24 +49,39 @@ typedef struct STreapStr{
     int nRoot;
 
     double epsilon;
+
+    freeFunc fFunc;
 }STreapStr;
 
 STreap createSTrp(double epsilon){
     STreapStr* st = (STreapStr*)malloc(sizeof(STreapStr));
-    if(!st) return NULL;
+    if(checkAllocation(st, "STreap.")) return NULL;
 
     st->raiz = NULL;
     st->altura = 0;
     st->nRoot = 0;
     st->epsilon = epsilon;
 
+    // Geracao de prioridade aleatoria.
+    srand((unsigned)time(NULL));
+
     return (STreap)st;
 }
 
 static NodeStr* createNodeSTrp(double x, double y, Info info){
     NodeStr* newNode = (NodeStr*)malloc(sizeof(NodeStr));
+    if(checkAllocation(newNode, "Novo node STreap.")) return NULL;
 
     newNode->box = (BoundingBox*)malloc(sizeof(BoundingBox));
+    if(checkAllocation(newNode->box, "Bounding box do novo node da STreap.")){
+        free(newNode);
+        return NULL;
+    }
+
+    newNode->box->x1 = x;
+    newNode->box->x2 = x;
+    newNode->box->y1 = y;
+    newNode->box->y2 = y;
 
     newNode->pai = NULL;
     newNode->dir = NULL;
@@ -75,12 +92,22 @@ static NodeStr* createNodeSTrp(double x, double y, Info info){
     newNode->x = x;
     newNode->y = y;
 
+    newNode->prioridade = rand();
+
     return newNode;
 }
 
-static void rotateRightSTrp(Node node){
+static void rotateRightSTrp(STreap t, Node node){
+    if(node == NULL){
+        printf("\n - rotateRightSTrp() -> Node passado e' nulo.");
+        return;
+    }
+
     NodeStr* p = (NodeStr*)node;
     NodeStr* q = p->esq;
+
+    if(q == NULL) return;
+
     NodeStr* aux = q->dir;
 
     q->dir = p;
@@ -88,12 +115,29 @@ static void rotateRightSTrp(Node node){
 
     q->pai = p->pai;
     p->pai = q;
-    aux->pai = p;
+    if(aux != NULL) aux->pai = p;
+
+    if(q->pai){
+        if(q->pai->esq == p) q->pai->esq = q;
+        else if(q->pai->dir == p) q->pai->dir = q;
+    }
+    else{
+        STreapStr* st = (STreapStr*)t;
+        st->raiz = q;
+    }
 }
 
-static void rotateLeftSTrp(Node node){
+static void rotateLeftSTrp(STreap t, Node node){
+    if(node == NULL){
+        printf("\n - rotateLeftSTrp() -> Node passado e' nulo.");
+        return;
+    }
+
     NodeStr* p = (NodeStr*)node;
     NodeStr* q = p->dir;
+
+    if(q == NULL) return;
+
     NodeStr* aux = q->esq;
 
     q->esq = p;
@@ -102,12 +146,27 @@ static void rotateLeftSTrp(Node node){
     q->pai = p->pai;
     p->pai = q;
     aux->pai = p;
+
+    if(q->pai){
+        if(q->pai->esq == p) q->pai->esq = q;
+        else if(q->pai->dir == p) q->pai->dir = q;
+    }
+    else{
+        STreapStr* st = (STreapStr*)t;
+        st->raiz = q;
+    }
 }
 
 static Node insertNodeByKeySTrp(STreap t, double x, double y, Info info){
+    if(t == NULL){
+        printf("\n - insertNodeByKeySTrp() -> Treap passada e' nula. -");
+        return NULL;
+    }
+    
     STreapStr* st = (STreapStr*)t;
 
     NodeStr* newNode = createNodeSTrp(x, y, info);
+    if(newNode == NULL) return NULL;
 
     if(st->raiz == NULL){
         st->raiz = newNode;
@@ -117,52 +176,66 @@ static Node insertNodeByKeySTrp(STreap t, double x, double y, Info info){
     NodeStr* aux = st->raiz;
 
     // ch1 < ch2, se:
-    // (ch1.x < ch2.x)    
+    // (ch1.x < ch2.x)
     //  -- OU --
     // (ch1.x == ch2.x AND ch1.y < ch2.y)
     
     // Verificacao de igualdade: |v - w| <= epsilon.
     while(aux != NULL){
-        if((newNode->x < aux->x) || (fabs(newNode->x - aux->x) <= st->epsilon && newNode->y < aux->y)){
+        if((x < aux->x) || ((fabs(x - aux->x) <= st->epsilon) && (y < aux->y))){
             if(aux->esq == NULL){
                 aux->esq = newNode;
                 newNode->pai = aux;
+                break;
             }
             else aux = aux->esq;
         }
-        else if(!(fabs(newNode->x - aux->x) <= st->epsilon && fabs(newNode->y - aux->y) <= st->epsilon)){
+        else if(!((fabs(x - aux->x) <= st->epsilon) && (fabs(y - aux->y) <= st->epsilon))){
             if(aux->dir == NULL){
                 aux->dir = newNode;
                 newNode->pai = aux;
+                break;
             }
             else aux = aux->dir;
         }
         else{
+            freeNodeSTrp(newNode, st->fFunc);
             printf("\n -- insertNodeByKeySTrp() -> No' ja' existe na arvore. -- ");
             return NULL;
         }
     }
+
+    return newNode;
 }
 
-static void rebalancearSTrp(NodeStr* node){
+static void rebalancearSTrp(STreap t, NodeStr* node){
+    if(node == NULL){
+        printf("\n - rebalancearSTrp() -> Node passado e' nulo. -");
+        return;
+    }
+
     NodeStr* pai = node->pai;
 
     if(pai == NULL) return;
 
     if(pai->prioridade < node->prioridade){
-        if(pai->esq == node) rotateRightSTrp(pai);
-        else rotateLeftSTrp(pai);
+        if(pai->esq == node) rotateRightSTrp(t, pai);
+        else rotateLeftSTrp(t, pai);
 
-        rebalancearSTrp(node);
+        rebalancearSTrp(t, node);
     }
 }
 
 Node insertSTrp(STreap t, double x, double y, Info info){
+    if(t == NULL){
+        printf("\n - insertSTrp() -> Treap passada e' nula. - ");
+        return NULL;
+    }
+
     NodeStr* newNode = insertNodeByKeySTrp(t, x, y, info);
+    if(newNode == NULL) return NULL;
 
-    // Sortear prioridade de newNode.
-
-    rebalancearSTrp(newNode);
+    rebalancearSTrp(t, newNode);
 
     // Calcular novo BoundingBox
 
@@ -181,6 +254,9 @@ static Node getNodeSTrpRec(NodeStr* node, double x, double y, double epsilon){
     if((node->x < x) || (fabs(node->x - x) <= epsilon && node->y < y)){
         return getNodeSTrpRec(node->esq, x, y, epsilon);
     }
+    else if(!((fabs(x - node->x) <= epsilon) && (fabs(y - node->y) <= epsilon))){
+        return getNodeSTrpRec(node->dir, x, y, epsilon);
+    }
     else{
         return node;
     }
@@ -198,57 +274,180 @@ void updateInfoSTrp(STreap t, Node n, Info i){
     ((NodeStr*)n)->info = i;
 }
 
+static void rebalancearDeleteNodeSTrp(STreapStr* tr, NodeStr* node){
+    if(node == NULL || tr == NULL){
+        printf("\n - rebalancearDeleteNodeSTrp() -> Uma ou mais informacoes passadas sao nulas. - ");
+        return;
+    }
+
+    NodeStr* dir = node->dir;
+    NodeStr* esq = node->esq;
+
+    while(esq != NULL && dir != NULL){
+        if(esq->prioridade > dir->prioridade) rotateRightSTrp(tr, node);
+        else rotateLeftSTrp(tr, node);
+    }
+
+    NodeStr* filho = (node->esq) ? node->esq : node->dir;
+
+    if(node->pai != NULL){
+        if(node->pai->esq == node) node->pai->esq = filho;
+        else node->pai->dir = filho;
+    }
+    else tr->raiz = filho;
+
+    if(filho != NULL) filho->pai = node->pai;
+}
+
 Info deleteNodeSTrp(STreap t, Node n){
+    if(t == NULL || n == NULL){
+        printf("\n - deleteNodeSTrp() -> Uma ou mais informacoes passadas sao nulas. -");
+        return NULL;
+    }
+
+    STreapStr* tr = (STreapStr*)t;
     NodeStr* root = ((NodeStr*)n);
 
     Info i = root->info;
 
-    // tirar N da streap
+    rebalancearDeleteNodeSTrp(t, root);
 
-    free(root);
+    freeNodeSTrp(root, tr->fFunc);
     return i;
-}
-
-static NodeStr* removeSTrpRec(NodeStr* node){
-    if(!(node->esq && node->dir)) return node;
-
-    if(node->esq->prioridade > node->dir->prioridade){
-
-    }
 }
 
 Info removeSTrp(STreap t, double xa, double ya){
+    if(t == NULL){
+        printf("\n - removeSTrp() -> Treap passada e' nula. -");
+        return NULL;
+    }
+
     NodeStr* node = getNodeSTrp(t, xa, ya);
 
-    NodeStr* aux = removeSTrpRec(node);
-    Info i = aux->info;
-
-    if(aux->dir){
-        if(aux->pai->dir == aux) aux->pai->dir = aux->dir;
-        else aux->pai->esq = aux->dir;
-        
-        aux->dir->pai = aux->pai;
-    }
-    else if(aux->esq){
-        if(aux->pai->dir == aux) aux->pai->dir = aux->esq;
-        else aux->pai->esq = aux->esq;
-        
-        aux->esq->pai = aux->pai;
-    }
-    else{
-        free(aux->box);
-        free(aux);
-    }
-
-    return i;
+    return deleteNodeSTrp(t, node);
 }
 
 void printSTrp(STreap t, char *nomeArq);
 
-void percursoLargura(STreap t, FvisitaNo fVisita, void *aux);
+void percursoLargura(STreap t, FvisitaNo fVisita, void *aux){
+    if(t == NULL){
+        printf("\n - percursoLargura() -> Treap passada e' nula. -");
+        return;
+    }
 
-void percursoSimetrico(STreap t, FvisitaNo fVisita, void *aux);
+    if(fVisita == NULL){
+        printf("\n - percursoLargura() -> Funcao de visita passada e' nula. -");
+        return;
+    }
 
-void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux);
+    STreapStr* tr = (STreapStr*)t;
 
-void killSTrp(STreap t);
+    // Lista usada como uma fila.
+    // (Insercao no comeco e remocao no fim)
+    Lista l = criaLista();
+
+    inserirInicio(l, tr->raiz);
+
+    while(!isListaVazia(l)){
+        NodeStr* node = removerFim(l);
+
+        fVisita(node->info, node->x, node->y, node->box->x1, node->box->y1, node->box->x2, node->box->y2, aux);
+
+        if(node->esq != NULL){
+            inserirInicio(l, node->esq);
+        }
+        if(node->dir != NULL){
+            inserirInicio(l, node->dir);
+        }
+    }
+}
+
+static void percursoSimetricoRec(NodeStr* node, FvisitaNo fVisita, void *aux){
+    if(node == NULL) return;
+
+    if(node->esq != NULL) percursoSimetricoRec(node->esq, fVisita, aux);
+    if(node != NULL) fVisita(node->info, node->x, node->y, node->box->x1, node->box->y1, node->box->x2, node->box->y2, aux);
+    if(node->dir != NULL) percursoSimetricoRec(node->dir, fVisita, aux);
+}
+
+void percursoSimetrico(STreap t, FvisitaNo fVisita, void *aux){
+    if(t == NULL){
+        printf("\n - percursoSimetrico() -> Treap passada e' nula. -");
+        return;
+    }
+
+    if(fVisita == NULL){
+        printf("\n - percursoSimetrico() -> Funcao de visita passada e' nula. -");
+        return;
+    }
+
+    STreapStr* tr = (STreapStr*)t;
+
+    percursoSimetricoRec(tr->raiz, fVisita, aux);
+}
+
+static void percursoProfundidadePreRec(NodeStr* node, FvisitaNo fVisita, void *aux){
+    if(node == NULL) return;
+
+    if(node != NULL) fVisita(node->info, node->x, node->y, node->box->x1, node->box->y1, node->box->x2, node->box->y2, aux);
+    if(node->esq != NULL) percursoProfundidadePreRec(node->esq, fVisita, aux);
+    if(node->dir != NULL) percursoProfundidadePreRec(node->dir, fVisita, aux);
+}
+
+void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux){
+    if(t == NULL){
+        printf("\n - percursoProfundidade() -> Treap passada e' nula. -");
+        return;
+    }
+
+    if(fVisita == NULL){
+        printf("\n - percursoProfundidade() -> Funcao de visita passada e' nula. -");
+        return;
+    }
+
+    STreapStr* tr = (STreapStr*)t;
+
+    percursoSimetricoRec(tr->raiz, fVisita, aux);
+}
+
+static void killSTrpRec(NodeStr* node, freeFunc fFunc){
+    if(node == NULL) return;
+
+    if(node->esq != NULL) killSTrpRec(node->esq, fFunc);
+    if(node->dir != NULL) killSTrpRec(node->dir, fFunc);
+    if(node != NULL) freeNodeSTrp(node, fFunc);
+}
+
+void killSTrp(STreap t){
+    if(t == NULL){
+        printf("\n - killSTrp() -> Treap passada e' nula. -");
+        return;
+    }
+
+    STreapStr* tr = (STreapStr*)t;
+
+    killSTrpRec(tr->raiz, tr->fFunc);
+}
+
+static void freeNodeSTrp(Node node, freeFunc fFunc){
+    if(node == NULL){
+        printf("\n - freeNodeSTrp() -> Node passado e' nulo. -");
+        return;
+    }
+
+    NodeStr* n = (NodeStr*)node;
+
+    fFunc(n->info, NULL);
+    free(n->box);
+    free(n);
+}
+
+void setFreeInfoFunctionSTrp(STreap t, freeFunc fFunc){
+    if(t == NULL){
+        printf("\n - setFreeFunctionSTrp() -> Treap passada e' nula. -");
+        return;
+    }
+
+    STreapStr* tr = (STreapStr*)t;
+    tr->fFunc = fFunc;
+}

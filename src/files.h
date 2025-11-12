@@ -21,7 +21,7 @@ typedef struct teste1{
 void printQuadrasToSVG(Quadra quadra, void* file);
 
 /**
- * @brief Coloca o item especifico no arquivo file.
+ * @brief Coloca um item (Ve'rtice) especifico no arquivo file.
  * 
  * @param item Ponteiro de uma estrutura / valor.
  * @param file Ponteiro de um arquivo aberto no modo de escrita.
@@ -29,6 +29,13 @@ void printQuadrasToSVG(Quadra quadra, void* file);
  */
 void printVerticesToSVG(Item item, void* file);
 
+/**
+ * @brief Coloca um item (Aresta) especifico no arquivo file.
+ * 
+ * @param item Ponteiro de uma estrutura / valor.
+ * @param file Ponteiro de um arquivo aberto no modo de escrita.
+ * @return Não há retorno de algum valor.
+ */
 void printEdgesToSVG(Item item, void* extra);
 
 // ADAPT: void printToTXT(const void* item, const void* file, const void* aux);

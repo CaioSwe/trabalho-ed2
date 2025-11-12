@@ -152,7 +152,7 @@ void getAllVerticesInfo(Graph g, Lista allInfo);
     as arestas do grafo, invocando a respectiva funcao.
     A busca em profundidade, eventualmente, pode produzir uma floresta.
     newTree e' invocada sempre que o percurso for retomado.
-*/  
+*/
 bool dfs(Graph g, Node node, procEdge treeEdge, procEdge forwardEdge, procEdge returnEdge, procEdge crossEdge, dfsRestarted newTree, void *extra);
 
 /*

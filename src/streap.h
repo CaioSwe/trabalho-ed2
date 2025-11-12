@@ -120,4 +120,9 @@ void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux);
 */
 void killSTrp(STreap t);
 
+/*
+  Seta a funcao de desalocacao das informacoes dos nos.
+*/
+void setFreeInfoFunctionSTrp(STreap t, freeFunc fFunc);
+
 #endif
