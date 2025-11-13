@@ -242,7 +242,51 @@ Node insertSTrp(STreap t, double x, double y, Info info){
     return newNode;
 }
 
-void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista resultado);
+static int checkCollisionBoxes(BoundingBox b1, BoundingBox b2){
+    return 1;
+}
+
+static void addToLista(Item item, void* aux){
+    NodeStr* node = (NodeStr*)item;
+    Lista l = (Lista)aux;
+
+    inserirInicio(l, node);
+}
+
+static void getNodeRegiaoSTrpRec(STreapStr* tr, NodeStr* node, BoundingBox rec, Lista resultado){
+    if(node == NULL) return;
+
+    int collision = checkCollisionBoxes(*node->box, rec);
+
+    switch (collision){
+        case 1:
+            // rec esta' dentro de node->box.
+            getNodeRegiaoSTrpRec(tr, node->esq, rec, resultado);
+            break;
+        case 2:
+            // rec esta' cruzando node->box.
+            // Inicia a busca dos no's a partir deste.
+            percursoSimetricoRec(node, addToLista, resultado);
+            break;
+        case 3:
+            // rec esta' fora de node->box.
+            getNodeRegiaoSTrpRec(tr, node->dir, rec, resultado);
+            break;
+        default:
+            break;
+    }
+}
+
+void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista resultado){
+    if(t == NULL){
+        printf("\n - getNodeRegiaoSTrp() -> Treap passada e' nula. -");
+        return;
+    }
+
+    STreapStr* tr = (STreapStr*)t;
+
+    getNodeRegiaoSTrpRec(tr, tr->raiz, (BoundingBox){x, y, x+w, y+h}, resultado);
+}
 
 Info getInfoSTrp(STreap t, Node n){
     return ((NodeStr*)n)->info;
