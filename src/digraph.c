@@ -14,15 +14,21 @@
 // Ve'rtice
 typedef struct Vert{
     char* nome;
-    Info info;
+    Info infoNo;
 } Vert;
 
 // Aresta
 typedef struct EdgeStr{
     Node to;
     Node from;
-    Info info;
+    Info infoAresta;
 } EdgeStr;
+
+// Vertice e lista de ajdacencia dele.
+typedef struct ListaAdj{
+    Vert vertice;
+    Lista listaEdges;
+}ListaAdj;
 
 // Grafo
 typedef struct GraphStr{
@@ -32,8 +38,7 @@ typedef struct GraphStr{
     int nEdge;
     
     Hash tabelaHash;
-    Vert* vertices;
-    Lista* listaAdj; // listaAdj[Node] -> Lista de Edges
+    ListaAdj* listaAdj; // listaAdj[Node] -> (Ve'rtice, Lista de Edges)
 } GraphStr;
 
 // Cria um novo grafo.
@@ -47,30 +52,19 @@ Graph createGraph(int nVert){
     GraphStr* g = (GraphStr*)malloc(sizeof(GraphStr));
     if(checkAllocation(g, "Grafo direcionado.")) return NULL;
 
-    // Aloca espaco para os vertices.
-    g->vertices = (Vert*)malloc(nVert * sizeof(Vert));
-    if(checkAllocation(g->vertices, "Lista de vertices do grafo.")){
-        free(g);
-        return NULL;
-    }
-
-    // Inicializa os campos do vertice no array.
-    for(int i = 0; i < nVert; i++){
-        g->vertices[i].nome = NULL;
-        g->vertices[i].info = NULL;
-    }
-
     // Aloca espaco para a lista de adjacencia.
-    g->listaAdj = (Lista*)malloc(nVert * sizeof(Lista));
+    g->listaAdj = (ListaAdj*)malloc(nVert * sizeof(ListaAdj));
     if(checkAllocation(g->listaAdj, "Lista de adjacencia do grafo.")){
-        free(g->vertices);
         free(g);
         return NULL;
     }
-
-    // Inicializa o vetor de listas.
+    
+    // Inicializa os campos do vertice na lista de adjacencia dele e sua lista.
     for(int i = 0; i < nVert; i++){
-        g->listaAdj[i] = criaLista();
+        g->listaAdj[i].vertice.nome = NULL;
+        g->listaAdj[i].vertice.nome = NULL;
+
+        g->listaAdj[i].listaEdges = criaLista();
     }
 
     // Cria a tabela hash para associacao de nome-valor
@@ -132,28 +126,28 @@ Node addNode(Graph g, char* nome, Info info){
     }
 
     // Aloca espaco para o nome do ve'rtice.
-    graph->vertices[graph->nVert].nome = (char*)malloc(sizeof(char) * (strlen(nome) + 1));
-    if(checkAllocation(graph->vertices[graph->nVert].nome, "Nome do novo ve'rtice do grafo.")){
+    graph->listaAdj[graph->nVert].vertice.nome = (char*)malloc(sizeof(char) * (strlen(nome) + 1));
+    if(checkAllocation(graph->listaAdj[graph->nVert].vertice.nome, "Nome do novo ve'rtice do grafo.")){
         return -1;
     }
-    strcpy(graph->vertices[graph->nVert].nome, nome);
+    strcpy(graph->listaAdj[graph->nVert].vertice.nome, nome);
 
-    graph->vertices[graph->nVert].info = info;
+    graph->listaAdj[graph->nVert].vertice.infoNo = info;
 
     int nVert = graph->nVert;
     
     // Aloca um nVertp para a associacao do indice da lista.
     int* nVertp = (int*)malloc(sizeof(int));
     if(checkAllocation(nVertp, "Ponteiro do indice do vertice do grafo.")){
-        free(graph->vertices[graph->nVert].nome);
-        graph->vertices[graph->nVert].info = NULL;
+        free(graph->listaAdj[graph->nVert].vertice.nome);
+        graph->listaAdj[graph->nVert].vertice.infoNo = NULL;
         return -1;
     }
 
     *nVertp = nVert;
 
     // Guarda a informacao do indice com nome na tabela Hash do grafo.
-    inserirHash(graph->tabelaHash, graph->vertices[graph->nVert].nome, nVertp);
+    inserirHash(graph->tabelaHash, graph->listaAdj[graph->nVert].vertice.nome, nVertp);
 
     graph->nVert += 1;
 
@@ -184,7 +178,7 @@ Info getNodeInfo(Graph g, Node node){
         printf("\n - getNodeInfo() -> Node fora dos limites do grafo. -");
         return NULL;
     }
-    return graph->vertices[node].info;
+    return graph->listaAdj[node].vertice.infoNo;
 }
 
 char* getNodeName(Graph g, Node node){
@@ -199,7 +193,7 @@ char* getNodeName(Graph g, Node node){
         printf("\n - getNodeName() -> Node fora dos limites do grafo. -");
         return NULL;
     }
-    return graph->vertices[node].nome;
+    return graph->listaAdj[node].vertice.nome;
 }
 
 void setNodeInfo(Graph g, Node node, Info info){
@@ -214,7 +208,7 @@ void setNodeInfo(Graph g, Node node, Info info){
         printf("\n - setNodeInfo() -> Node fora dos limites do grafo. -");
         return;
     }
-    graph->vertices[node].info = info;
+    graph->listaAdj[node].vertice.infoNo = info;
 }
 
 Edge addEdge(Graph g, Node from, Node to, Info info){
@@ -233,11 +227,11 @@ Edge addEdge(Graph g, Node from, Node to, Info info){
     EdgeStr* edge = (EdgeStr*)malloc(sizeof(EdgeStr));
     if(checkAllocation(edge, "Nova aresta do grafo.")) return NULL;
 
-    edge->info = info;
+    edge->infoAresta = info;
     edge->to = to;
     edge->from = from;
 
-    inserirFim(graph->listaAdj[from], edge);
+    inserirFim(graph->listaAdj[from].listaEdges, edge);
 
     graph->nEdge += 1;
 
@@ -264,7 +258,7 @@ Edge getEdge(Graph g, Node from, Node to){
         return NULL;
     }
 
-    EdgeStr* edge = getItemListaI(graph->listaAdj[from], compararNodes, &to);
+    EdgeStr* edge = getItemListaI(graph->listaAdj[from].listaEdges, compararNodes, &to);
 
     return edge;
 }
@@ -304,7 +298,7 @@ Info getEdgeInfo(Graph g, Edge e){
     }
 
     EdgeStr* edge = (EdgeStr*)e;
-    return edge->info;
+    return edge->infoAresta;
 }
 
 void setEdgeInfo(Graph g, Edge e, Info info){
@@ -314,7 +308,7 @@ void setEdgeInfo(Graph g, Edge e, Info info){
     }
 
     EdgeStr* edge = (EdgeStr*)e;
-    edge->info = info;
+    edge->infoAresta = info;
 }
 
 void removeEdge(Graph g, Edge e, freeFunc freeEdgeFunc){
@@ -333,10 +327,10 @@ void removeEdge(Graph g, Edge e, freeFunc freeEdgeFunc){
         return;
     }
 
-    EdgeStr* edgeRem = remover(graph->listaAdj[from], compararEdges, edge);
+    EdgeStr* edgeRem = remover(graph->listaAdj[from].listaEdges, compararEdges, edge);
 
     if(edgeRem != NULL){
-        if(edgeRem->info != NULL && freeEdgeFunc != NULL) freeEdgeFunc(edgeRem->info, NULL);
+        if(edgeRem->infoAresta != NULL && freeEdgeFunc != NULL) freeEdgeFunc(edgeRem->infoAresta, NULL);
         free(edgeRem);
     }
 
@@ -356,7 +350,7 @@ bool isAdjacent(Graph g, Node from, Node to){
         return false;
     }
 
-    return isInLista(graph->listaAdj[from], compararNodes, &to);
+    return isInLista(graph->listaAdj[from].listaEdges, compararNodes, &to);
 }
 
 static void* mappingGetToNode(Item item){
@@ -379,7 +373,7 @@ void adjacentNodes(Graph g, Node node, Lista nosAdjacentes){
 
     if(nosAdjacentes == NULL) nosAdjacentes = criaLista();
 
-    mapTo(graph->listaAdj[node], nosAdjacentes, mappingGetToNode, sizeof(int));
+    mapTo(graph->listaAdj[node].listaEdges, nosAdjacentes, mappingGetToNode, sizeof(int));
 }
 
 void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes){
@@ -397,7 +391,7 @@ void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes){
 
     if(arestasAdjacentes == NULL) arestasAdjacentes = criaLista();
 
-    copyLista(graph->listaAdj[node], arestasAdjacentes, sizeof(EdgeStr));
+    copyLista(graph->listaAdj[node].listaEdges, arestasAdjacentes, sizeof(EdgeStr));
 }
 
 void getNodeNames(Graph g, Lista nomesNodes){
@@ -411,7 +405,7 @@ void getNodeNames(Graph g, Lista nomesNodes){
     if(nomesNodes == NULL) nomesNodes = criaLista();
 
     for(int i = 0; i < graph->nVert; i++){
-        inserirFim(nomesNodes, graph->vertices[i].nome);
+        inserirFim(nomesNodes, graph->listaAdj[i].vertice.nome);
     }
 }
 
@@ -426,7 +420,7 @@ void getEdges(Graph g, Lista arestas){
     if(arestas == NULL) arestas = criaLista();
 
     for(int i = 0; i < graph->nVert; i++){
-        concatLista(arestas, graph->listaAdj[i], sizeof(EdgeStr));
+        concatLista(arestas, graph->listaAdj[i].listaEdges, sizeof(EdgeStr));
     }
 }
 
@@ -439,7 +433,7 @@ void getAllVerticesInfo(Graph g, Lista allInfo){
     GraphStr* graph = (GraphStr*)g;
 
     for(int i = 0; i < graph->nVert; i++){
-        inserirFim(allInfo, graph->vertices[i].info);
+        inserirFim(allInfo, graph->listaAdj[i].vertice.infoNo);
     }
 }
 
@@ -497,7 +491,7 @@ static void dfsVisit(GraphStr* graph, Node node, void* extra){
     res->cor[node] = CINZA;
     res->td[node] = res->tempo;
 
-    percorrerLista(graph->listaAdj[node], dfsVisitInner, res);
+    percorrerLista(graph->listaAdj[node].listaEdges, dfsVisitInner, res);
 
     res->tempo += 1;
     res->cor[node] = PRETO;
@@ -625,7 +619,7 @@ bool bfs(Graph g, Node node, procEdge discoverNode, void *extra){
     while(!isListaVazia(lista)){
         Node* nodeptr = removerFim(lista);
 
-        percorrerLista(graph->listaAdj[*nodeptr], discNodes, &res);
+        percorrerLista(graph->listaAdj[*nodeptr].listaEdges, discNodes, &res);
         res.cor[*nodeptr] = PRETO;
         free(nodeptr);
     }
@@ -644,7 +638,7 @@ static void freeAresta(Edge e, void* extra){
     EdgeStr* edge = (EdgeStr*)e;
     void (*freeArestaInfoFunc)(Info, void*) = (void (*)(Info, void*))extra;
 
-    freeArestaInfoFunc(edge->info, NULL);
+    freeArestaInfoFunc(edge->infoAresta, NULL);
     free(edge);
 }
 
@@ -657,14 +651,13 @@ void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc){
     GraphStr* graph = (GraphStr*)g;
 
     for(int i = 0; i < graph->nVert; i++){
-        if(graph->vertices[i].nome) free(graph->vertices[i].nome);
-        if(graph->vertices[i].info) freeVerticeFunc(graph->vertices[i].info, NULL);
+        if(graph->listaAdj[i].vertice.nome) free(graph->listaAdj[i].vertice.nome);
+        if(graph->listaAdj[i].vertice.infoNo) freeVerticeFunc(graph->listaAdj[i].vertice.infoNo, NULL);
 
-        destroiLista(graph->listaAdj[i], freeAresta, freeEdgeFunc);
+        destroiLista(graph->listaAdj[i].listaEdges, freeAresta, freeEdgeFunc);
     }
 
     if (graph->listaAdj) free(graph->listaAdj);
-    if (graph->vertices) free(graph->vertices);
     destroiHash(graph->tabelaHash, freeReg, NULL);
     free(graph);
 }
@@ -790,7 +783,7 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getNumberFun
             break;
         }
 
-        percorrerLista(graph->listaAdj[*u], relaxEdge, &res);
+        percorrerLista(graph->listaAdj[*u].listaEdges, relaxEdge, &res);
         free(u);
     }
 
@@ -826,6 +819,8 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getNumberFun
     }
 
     dStr->distanciaTotal = distancias[to];
+
+    printf("\n Caminho adiquirido com sucesso. (%d -> %d)", from, to);
 
     free(distancias);
     free(predecessores);

@@ -6,44 +6,36 @@
 
 #include "digraph.h"
 
-typedef struct teste1{
-    FILE* file;
-    Graph grafo;
-    int cor;
-}teste1;
-
 /**
  * @brief Coloca a quadra especificada no arquivo file.
  * 
  * @param quadra Ponteiro de uma estrutura de Quadra.
- * @param x Posicao horizontal da quadra.
- * @param y Posicao vertical da quadra.
- * @param mbbX1 Posicao horizontal 1 do bounding box da quadra.
- * @param mbbY1 Posicao vertical 1 do bounding box da quadra.
- * @param mbbX2 Posicao horizontal 2 do bounding box da quadra.
- * @param mbbY2 Posicao vertical 2 do bounding box da quadra.
- * @param file Ponteiro de um arquivo aberto no modo de escrita.
+ * @param file Ponteiro de um arquivo SVG aberto em modo de escrita.
  * @return Não há retorno de algum valor.
  */
-void printQuadrasToSVG(Quadra quadra, double x, double y, double mbbX1, double mbbY1, double mbbX2, double mbbY2, void *file);
+void printQuadraToSVG(Quadra quadra, FILE* file);
 
 /**
- * @brief Coloca um item (Ve'rtice) especifico no arquivo file.
+ * @brief Coloca um Ve'rtice do grafo g especifico no arquivo file.
  * 
- * @param item Ponteiro de uma estrutura / valor.
- * @param file Ponteiro de um arquivo aberto no modo de escrita.
+ * @param g Grafo g.
+ * @param node Nu'mero do ve'rtice assocido ao grafo g.
+ * @param file Ponteiro de um arquivo SVG aberto em modo de escrita.
+ * @param color String de cor a ser pintada o ve'rtice.
  * @return Não há retorno de algum valor.
  */
-void printVerticesToSVG(Item item, void* file);
+void printVerticeToSVG(Graph g, Node node, FILE* file, const char* color);
 
 /**
- * @brief Coloca um item (Aresta) especifico no arquivo file.
+ * @brief Coloca uma Aresta do grafo G especifico no arquivo file.
  * 
- * @param item Ponteiro de uma estrutura / valor.
- * @param file Ponteiro de um arquivo aberto no modo de escrita.
+ * @param g Grafo g.
+ * @param e Ponteiro para uma aresta associada ao grafo g.
+ * @param file Ponteiro de um arquivo SVG aberto em modo de escrita.
+ * @param color String de cor a ser pintada a aresta.
  * @return Não há retorno de algum valor.
  */
-void printEdgesToSVG(Item item, void* extra);
+void printEdgeToSVG(Graph g, Edge e, FILE* file, const char* color);
 
 // ADAPT: void printToTXT(const void* item, const void* file, const void* aux);
 

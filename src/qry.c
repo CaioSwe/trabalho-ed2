@@ -27,7 +27,7 @@ typedef struct PercursoStr{
     Caminho caminhoRapido;
 }PercursoStr;
 
-// Estrutura a ser armazenada na tabela Hash para os comandos [blq, rbl].
+// Estrutura a ser armazenada nas listas da tabela Hash para os comandos [blq, rbl].
 typedef struct BloqueioStr{
     Lista lista; // Lista das arestas desabilitadas [Edge]
     char* bloqueio; // Comando de bloqueio [sn, ns, lo, ol]
@@ -42,37 +42,89 @@ static void freeBloqueio(void* bloqueio, void* extra){
 
 typedef struct ResourcesSentido{
     Graph graph;
+    Lista lista;
     char* sentido;
 }ResourcesSentido;
 
+static void verificarSentidoBlock(Item item, void* extra){
+    Edge e = (Edge)item;
+    ResourcesSentido* res = (ResourcesSentido*)extra;
+
+    Node from = getFromNode(res->graph, e);
+    Node to = getToNode(res->graph, e);
+
+    Info infoFrom = getNodeInfo(res->graph, from);
+    Info infoTo = getNodeInfo(res->graph, to);
+
+    Info edgeInfo = getEdgeInfo(res->graph, e);
+
+    if(strcmp(res->sentido, "ns") == 0){
+        double y1 = getVerticeViaY(infoFrom);
+        double y2 = getVerticeViaY(infoTo);
+
+        if(y1 < y2) blockVia(edgeInfo);
+        inserirFim(res->lista, e);
+    }
+    else if(strcmp(res->sentido, "sn") == 0){
+        double y1 = getVerticeViaY(infoFrom);
+        double y2 = getVerticeViaY(infoTo);
+
+        if(y1 > y2) blockVia(edgeInfo);
+        inserirFim(res->lista, e);
+    }
+    else if(strcmp(res->sentido, "lo") == 0){
+        double x1 = getVerticeViaX(infoFrom);
+        double x2 = getVerticeViaX(infoTo);
+
+        if(x1 > x2) blockVia(edgeInfo);
+        inserirFim(res->lista, e);
+    }
+    else if(strcmp(res->sentido, "ol") == 0){
+        double x1 = getVerticeViaX(infoFrom);
+        double x2 = getVerticeViaX(infoTo);
+
+        if(x1 < x2) blockVia(edgeInfo);
+        inserirFim(res->lista, e);
+    }
+}
+
+static void unblockViaVoid(Item item, void* extra){
+    ResourcesSentido* res = (ResourcesSentido*)extra;
+    Edge e = (Edge)item;
+    
+    Info edgeInfo = getEdgeInfo(res->graph, e);
+    
+    unblockVia(edgeInfo);
+}
+
 // Desabilita todas as arestas passadas para esta funcao.
 // Possíveis valores de sentido: ns (Norte-Sul), sn (Sul-Norte), lo (Leste-Oeste), ol (Oeste-Leste).
-static void bloquearSentido(Item item, void* extra){
+static void bloquearNodeSentido(Item item, void* extra){
     ResourcesSentido* res = (ResourcesSentido*)extra;
-    Node node = (Node)item;
+    Node* nodep = (Node*)item;
 
     Lista adjacentes = criaLista();
 
-    adjacentEdges(res->graph, node, adjacentes);
+    adjacentEdges(res->graph, *nodep, adjacentes);
 
-    percorrerLista(adjacentes, NULL, NULL);
-    // blockAresta(item, sentido);
-    // ou alguma coisa assim
+    percorrerLista(adjacentes, verificarSentidoBlock, res);
 }
 
 // Habilita todas as arestas passadas para esta funcao.
 static void desbloquearSentido(Item item, void* extra){
-    char* sentido = (char*)extra;
+    ResourcesSentido* res = (ResourcesSentido*)extra;
+    Node* nodep = (Node*)item;
 
-    //
+    Lista adjacentes = criaLista();
 
-    // desbloquearArestas(item, sentido);
-    // ou alguma coisa assim
+    adjacentEdges(res->graph, *nodep, adjacentes);
+
+    percorrerLista(adjacentes, unblockViaVoid, res);
 }
 
 static void removerQuadraLista(Item item, void* extra){
     Quadra q = (Quadra)item;
-    Quadras qs = (Quadras)extra;
+    // Quadras qs = (Quadras)extra;
 
     printf("\nQ = (%s)", getQuadraID(q));
     setQuadraCFill(q, "#660080");
@@ -81,10 +133,12 @@ static void removerQuadraLista(Item item, void* extra){
 }
 
 // Aumenta a velocidade media das arestas passadas.
-static void aumentarVmArestas(Graph g, Edge e, int td, int tf, void* extra){
+static bool aumentarVmArestas(Graph g, Edge e, int td, int tf, void* extra){
     Info info = getEdgeInfo(g, e);
     setArestaVM(info, *(double*)extra);
     setEdgeInfo(g, e, info);
+
+    return true;
 }
 
 // Funcao para pegar a velocidade media de uma aresta na lista (Dijkstra).
@@ -95,6 +149,29 @@ double getArestaVMVoid(Edge e, void* extra){
 // Funcao para pegar o comprimento de uma aresta na lista (Dijkstra).
 double getArestaCMPVoid(Edge e, void* extra){
     return getArestaCMP(getEdgeInfo(NULL, e));
+}
+
+typedef struct ResourcesInsertSTrpGraphVoid{
+    STreap grafoStrp;
+    Graph grafo;
+}ResourcesInsertSTrpGraphVoid;
+
+static void insertSTrpGraphVoid(Item item, void* extra){
+    ResourcesInsertSTrpGraphVoid* res = (ResourcesInsertSTrpGraphVoid*)extra;
+    char* nome = (char*)item;
+    
+    Node node = getNode(res->grafo, nome);
+    Info nodeInfo = getNodeInfo(res->grafo, node);
+    double x = getVerticeViaX(nodeInfo);
+    double y = getVerticeViaY(nodeInfo);
+
+    Node* nodep = (Node*)malloc(sizeof(Node));
+    if(checkAllocation(nodep, "Ponteiro para node na insercao do grafo STrp.")){
+        killSTrp(res->grafoStrp, NULL, NULL);
+        return;
+    }
+
+    insertSTrp(res->grafoStrp, x, y, nodep);
 }
 
 Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
@@ -138,6 +215,15 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
     // Cria uma tabela Hash para a associacao de nome-lista para os comandos de bloqueio de remocao de bloqueio.
     Hash tabelaHash = criaHash(50, true, 0.75f);
 
+    // Cria uma STreap para busca de nodes dentro de uma area [catac, blq, b].
+    STreap grafoSTreap = createSTrp(0.000001);
+
+    // Insere todos os nomes dos nodes do grafo na STreap.
+    Lista nomesGrafo = criaLista();
+    getNodeNames(grafo, nomesGrafo);
+    percorrerLista(nomesGrafo, insertSTrpGraphVoid, &(ResourcesInsertSTrpGraphVoid){grafoSTreap, grafo});
+
+    // Cria e inicializa a estrutura de percurso.
     PercursoStr* percurso = (PercursoStr*)malloc(sizeof(PercursoStr));
     if(checkAllocation(percurso, "Estrutura de percurso.")){
         destroiHash(tabelaHash, freeBloqueio, NULL);
@@ -160,7 +246,8 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             fscanf(fEntrada, "%s %c %d\n", cep, &face, &num);
 
             // Pega o node com o cep registrado no grafo.
-            Node node = getNode(grafo, cep);
+            // Node node = getNode(grafo, cep);
+            printf("\n a");
 
             percurso->origem = (Ponto*)malloc(sizeof(Ponto));
             if(checkAllocation(percurso->origem, "Ponto de origem do percurso.")){
@@ -170,7 +257,8 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             }
 
             // Registra as informacoes do node encontrado na origem do percurso.
-            percurso->origem->node = node;
+            //percurso->origem->node = node;
+            percurso->origem->node = 250;
             percurso->origem->face = face;
             percurso->origem->num = num;
         }
@@ -203,12 +291,13 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             fscanf(fEntrada, "%s %s %lf %lf %lf %lf\n", nome, sentido, &x, &y, &w, &h);
         
             Lista lista = criaLista();
+            Lista listaDeBloqueios = criaLista();
 
-            // Pega os vertices dentro da regiao [x, y, w, h].
-            //getNodeRegiaoSTrp(NULL, x, y, w, h, lista);
+            // Pega os nodes dentro da regiao [x, y, w, h].
+            getNodeRegiaoSTrp(grafoSTreap, x, y, w, h, lista);
 
-            // Percorre a lista das quadras encontradas, bloqueando-as no sentido fornecido.
-            //percorrerLista(lista, bloquearSentido, sentido);
+            // Percorre a lista dos nodes encontrados, bloqueando as arestas que estao no sentido fornecido.
+            percorrerLista(lista, bloquearNodeSentido, &(ResourcesSentido){grafo, listaDeBloqueios, sentido});
 
             // Inicializa a estrutura de bloqueios a ser armazenada na tabela Hash.
             BloqueioStr* listaBlq = (BloqueioStr*)malloc(sizeof(BloqueioStr));
@@ -230,19 +319,19 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
 
             strcpy(listaBlq->bloqueio, sentido);
             
-            listaBlq->lista = lista;
+            listaBlq->lista = listaDeBloqueios;
 
-            // Insere a lista das quadras na tabela Hash para busca do comando [rbl].
+            // Insere a estrutura BloqueioStr (Lista lista, char* sentido) na tabela Hash para busca do comando [rbl].
             inserirHash(tabelaHash, nome, listaBlq);
         }
         else if(strcmp(op, "rbl") == 0){
             // Pega [nome] da operacao de remocao de bloqueio.
             fscanf(fEntrada, "%s\n", nome);
         
-            // Busca a lista associada ao nome na tabela Hash.
-            Lista lista = (Lista)getHashValue(tabelaHash, nome);
+            // Busca a estrutura de Bloqueio associada ao nome na tabela Hash.
+            BloqueioStr* blqs = (BloqueioStr*)getHashValue(tabelaHash, nome);
 
-            percorrerLista(lista, desbloquearSentido, NULL);
+            percorrerLista(blqs->lista, desbloquearSentido, blqs->bloqueio);
         }
         else if(strcmp(op, "b") == 0){
             // Pega [x, y, fator] da operacao de boost(?)
@@ -252,52 +341,53 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             // Node node = getClosestNode(grafo, x, y);
 
             // Comeca o percurso em largura do node.
-            // bfs(grafo, node, aumentarVmArestas, &fator);
+            bfs(grafo, 0, aumentarVmArestas, &fator);
         }
         else if(strcmp(op, "p?") == 0){
             // Pega [cep, face, num, cmc, cmr] da operacao de percurso.
             fscanf(fEntrada, "%s %c %d %s %s\n", cep, &face, &num, cmc, cmr);
 
-            // if(percurso->origem == NULL){
-            //     printf("\n- processQryFile() -> ponto de origem nao definido antes da operacao 'p?'. -");
-            //     if(percurso->origem) free(percurso->origem);
-            //     destroiHash(tabelaHash, freeBloqueio, NULL);
-            //     free(percurso);
-            //     return NULL;
-            // }
+            if(percurso->origem == NULL){
+                printf("\n- processQryFile() -> ponto de origem nao definido antes da operacao 'p?'. -");
+                if(percurso->origem) free(percurso->origem);
+                destroiHash(tabelaHash, freeBloqueio, NULL);
+                free(percurso);
+                return NULL;
+            }
 
-            // percurso->destino = (Ponto*)malloc(sizeof(Ponto));
-            // if(checkAllocation(percurso->destino, "Ponto de destino do percurso.")){
-            //     if(percurso->origem) free(percurso->origem);
-            //     destroiHash(tabelaHash, freeBloqueio, NULL);
-            //     free(percurso);
-            //     return NULL;
-            // }
+            percurso->destino = (Ponto*)malloc(sizeof(Ponto));
+            if(checkAllocation(percurso->destino, "Ponto de destino do percurso.")){
+                if(percurso->origem) free(percurso->origem);
+                destroiHash(tabelaHash, freeBloqueio, NULL);
+                free(percurso);
+                return NULL;
+            }
 
-            // // Associa todos os valores passados ao destino.
+            // Associa todos os valores passados ao destino.
             // percurso->destino->node = getNode(grafo, cep);
-            // percurso->destino->face = face;
-            // percurso->destino->num = num;
+            percurso->destino->node = 50;
+            percurso->destino->face = face;
+            percurso->destino->num = num;
 
-            // strcpy(percurso->cmc, cmc);
-            // strcpy(percurso->cmr, cmr);
+            strcpy(percurso->cmc, cmc);
+            strcpy(percurso->cmr, cmr);
 
-            // // Calcula o caminho mais curto e o caminho mais ra'pido com Dijkstra (implementacao no final de digraph.c).
-            // percurso->caminhoCurto = getShortestPath(grafo, percurso->origem->node, percurso->destino->node, getArestaCMPVoid);
-            // percurso->caminhoRapido = getShortestPath(grafo, percurso->origem->node, percurso->destino->node, getArestaVMVoid);
+            // Calcula o caminho mais curto e o caminho mais ra'pido com Dijkstra (implementacao no final de digraph.c).
+            percurso->caminhoCurto = getShortestPath(grafo, percurso->origem->node, percurso->destino->node, getArestaCMPVoid);
+            percurso->caminhoRapido = getShortestPath(grafo, percurso->origem->node, percurso->destino->node, getArestaVMVoid);
         
-            // // Caso algum dos caminhos for nulo, aborta o retorno do percurso.
-            // if(percurso->caminhoCurto == NULL || percurso->caminhoRapido == NULL){
-            //     if(percurso->caminhoCurto != NULL) freeCaminho(percurso->caminhoCurto, freeArestaVia);
-            //     if(percurso->caminhoRapido != NULL) freeCaminho(percurso->caminhoRapido, freeArestaVia);
+            // Caso algum dos caminhos for nulo, aborta o retorno do percurso.
+            if(percurso->caminhoCurto == NULL || percurso->caminhoRapido == NULL){
+                if(percurso->caminhoCurto != NULL) freeCaminho(percurso->caminhoCurto, freeArestaVia);
+                if(percurso->caminhoRapido != NULL) freeCaminho(percurso->caminhoRapido, freeArestaVia);
 
-            //     free(percurso->origem);
-            //     free(percurso->destino);
-            //     destroiHash(tabelaHash, freeBloqueio, NULL);
-            //     free(percurso);
+                free(percurso->origem);
+                free(percurso->destino);
+                destroiHash(tabelaHash, freeBloqueio, NULL);
+                free(percurso);
 
-            //     return NULL;
-            // }
+                return NULL;
+            }
         }
     }
 
@@ -305,7 +395,7 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
 
     // Fecha o arquivo de entrada
     fclose(fEntrada);
-    
+
     return percurso;
 }
 
@@ -317,4 +407,14 @@ Caminho getCaminhoCurto(Percurso percurso){
 Caminho getCaminhoRapido(Percurso percurso){
     PercursoStr* p = (PercursoStr*)percurso;
     return p->caminhoRapido;
+}
+
+const char* getPercursoRapidoColor(Percurso percurso){
+    PercursoStr* p = (PercursoStr*)percurso;
+    return p->cmr;
+}
+
+const char* getPercursoCurtoColor(Percurso percurso){
+    PercursoStr* p = (PercursoStr*)percurso;
+    return p->cmc;
 }

@@ -186,7 +186,7 @@ Quadra getQuadraByID(Quadras quadras, const char* id){
 }
 
 static Item convertNodeToQuadra(Item item){
-    return getInfoSTrp(NULL, item);
+    return getInfoSTrp(NULL, item, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 void getQuadrasRegion(Quadras quadras, double x, double y, double w, double h, Lista resultado){

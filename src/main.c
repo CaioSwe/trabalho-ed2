@@ -33,13 +33,19 @@ void getMax(Quadra quadra, double x, double y, double mbbX1, double mbbY1, doubl
     if(itemH > maxY) maxY = itemH;
 }
 
-char* hashPrintInt(void* item, void* extra){
-    int* intp = (int*)item;
-    
-    char* str = malloc(12);
+void printQuadraToSVGvoid(Info info, double x, double y, double mbbX1, double mbbY1, double mbbX2, double mbbY2, void* extra){
+    printQuadraToSVG(info, (FILE*)extra);
+}
 
-    if (str != NULL) sprintf(str, "%d", *intp);
-    return str;
+typedef struct ResourcesPrintEdge{
+    Graph g;
+    FILE* file;
+    const char* color;
+}ResourcesPrintEdge;
+
+void printEdgeToSVGvoid(Item item, void* extra){
+    ResourcesPrintEdge* res = (ResourcesPrintEdge*)extra;
+    printEdgeToSVG(res->g, item, res->file, res->color);
 }
 
 int main(int argc, char* argv[]){
@@ -175,7 +181,7 @@ int main(int argc, char* argv[]){
     percorrerQuadras(formas, getMax, NULL);
 
     fprintf(fSaida, "<svg viewBox=\"-39.0 -39.0 %.1f %.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX * 1.2f, maxY * 1.2f);
-    percorrerQuadras(formas, printQuadrasToSVG, fSaida);
+    percorrerQuadras(formas, printQuadraToSVGvoid, fSaida);
     
         // (2.2.1) OPCIONAL: Visualizacao do grafo no SVG.
         // Tire de comenta'rio caso queria visualizar os vertices do grafo no SVG produzido pelo arquivo .via
@@ -219,10 +225,10 @@ int main(int argc, char* argv[]){
         printf("\nEscrevendo no arquivo: %s\n", fOutputPathQry);
 
         fprintf(fSaida, "<svg viewBox=\"-39.0 -39.0 %.1f %.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX * 1.2f, maxY * 1.2f);
-        percorrerQuadras(formas, printQuadrasToSVG, fSaida);
+        percorrerQuadras(formas, printQuadraToSVGvoid, fSaida);
 
-        percorrerLista(listaRapido, printEdgesToSVG, &(teste1){fSaida, grafo, 1});
-        percorrerLista(listaCurto, printEdgesToSVG, &(teste1){fSaida, grafo, 2});
+        percorrerLista(listaRapido, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, getPercursoRapidoColor(percurso)});
+        percorrerLista(listaCurto, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, getPercursoCurtoColor(percurso)});
 
         fprintf(fSaida, "</svg>");
         fclose(fSaida);

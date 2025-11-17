@@ -22,10 +22,10 @@ typedef struct BoundingBox{
 
 typedef struct NodeStr{
     double x, y;        // Chave de busca
-    int prioridade;
     Info info;
-    
     BoundingBox* box;
+
+    int prioridade;
 
     struct NodeStr* pai;
     struct NodeStr* esq;
@@ -318,8 +318,17 @@ void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista r
     getNodeRegiaoSTrpRec(tr, tr->raiz, (BoundingBox){x, y, x+w, y+h}, resultado);
 }
 
-Info getInfoSTrp(STreap t, NodeST n){
-    return ((NodeStr*)n)->info;
+Info getInfoSTrp(STreap t, NodeST n, double *x, double *y, double *mbbX1, double *mbbY1, double *mbbX2, double *mbbY2){
+    NodeStr* ntr = (NodeStr*)n;
+    
+    if(x != NULL) *x = ntr->x;
+    if(y != NULL) *y = ntr->y;
+    if(mbbX1 != NULL) *mbbX1 = ntr->box->x1;
+    if(mbbX2 != NULL) *mbbX2 = ntr->box->x2;
+    if(mbbY1 != NULL) *mbbY1 = ntr->box->y1;
+    if(mbbY2 != NULL) *mbbY2 = ntr->box->y2;
+
+    return ntr->info;
 }
 
 static NodeST getNodeSTrpRec(NodeStr* node, double x, double y, double epsilon){

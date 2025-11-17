@@ -5,30 +5,25 @@
 #include "digraph.h"
 #include "via.h"
 
-void printQuadrasToSVG(Quadra quadra, double x, double y, double mbbX1, double mbbY1, double mbbX2, double mbbY2, void *file){
-    FILE* arquivo = (FILE*)file;
-
-    fprintf(arquivo, "<rect width=\"%.1lf\" height=\"%.1lf\" x=\"%.1lf\" y=\"%.1lf\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%s\" />\n", getQuadraWidth(quadra), getQuadraHeight(quadra), x, y, getQuadraCFill(quadra), getQuadraCStrk(quadra), getQuadraSW(quadra));
-    fprintf(arquivo, "<text x=\"%.1lf\" y=\"%.1lf\" dominant-baseline=\"hanging\">%s</text>", x, y, getQuadraID(quadra));
+void printQuadraToSVG(Quadra quadra, FILE* file){
+    fprintf(file, "<rect width=\"%.1lf\" height=\"%.1lf\" x=\"%.1lf\" y=\"%.1lf\" fill=\"%s\" stroke=\"%s\" stroke-width=\"%s\" />\n", getQuadraWidth(quadra), getQuadraHeight(quadra), getQuadraX(quadra), getQuadraY(quadra), getQuadraCFill(quadra), getQuadraCStrk(quadra), getQuadraSW(quadra));
+    fprintf(file, "<text x=\"%.1lf\" y=\"%.1lf\" dominant-baseline=\"hanging\">%s</text>", getQuadraX(quadra), getQuadraY(quadra), getQuadraID(quadra));
 }
 
-void printVerticesToSVG(Item item, void* file){
+void printVerticeToSVG(Graph g, Node node, FILE* file, const char* color){
     FILE* arquivo = (FILE*)file;
 
-    double x = getVerticeViaX(item);
-    double y = getVerticeViaY(item);
+    Info nodeInfo = getNodeInfo(g, node);
 
-    fprintf(arquivo, " <circle cx=\"%.1lf\" cy=\"%.1lf\" r=\"5\" fill=\"blue\" />\n", x, y);
+    double x = getVerticeViaX(nodeInfo);
+    double y = getVerticeViaY(nodeInfo);
+
+    fprintf(arquivo, " <circle cx=\"%.1lf\" cy=\"%.1lf\" r=\"5\" fill=\"%s\" />\n", x, y, color);
 }
 
-void printEdgesToSVG(Item item, void* file){
-    teste1* t1 = (teste1*)file;
-
-    FILE* arquivo = t1->file;
-    Graph g = t1->grafo;
-
-    Node f = getFromNode(NULL, item);
-    Node t = getToNode(NULL, item);
+void printEdgeToSVG(Graph g, Edge e, FILE* file, const char* color){
+    Node f = getFromNode(g, e);
+    Node t = getToNode(g, e);
 
     Info infoF = getNodeInfo(g, f);
     Info infoT = getNodeInfo(g, t);
@@ -39,8 +34,7 @@ void printEdgesToSVG(Item item, void* file){
     double x2 = getVerticeViaX(infoT);
     double y2 = getVerticeViaY(infoT);
 
-    fprintf(arquivo, "<text x=\"%.1lf\" y=\"%.1lf\" dominant-baseline=\"hanging\">%s</text>", x1, y1 - 20.0f, f);
-    fprintf(arquivo, "<line x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" style=\"stroke:%s;stroke-width:2\"/>\n", x1, y1, x2, y2, (t1->cor == 1 ? "red" : "blue"));
+    fprintf(file, "<line x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" style=\"stroke:%s;stroke-width:4\"/>\n", x1, y1, x2, y2, color);
 }
 
 // typedef struct teste{

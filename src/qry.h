@@ -23,8 +23,14 @@ typedef void* Percurso;
  */
 Percurso processQryFile(Graph grafo, Quadras quadras, const char* path);
 
+// FUNCOES GET
+
 Caminho getCaminhoCurto(Percurso percurso);
 
 Caminho getCaminhoRapido(Percurso percurso);
+
+const char* getPercursoRapidoColor(Percurso percurso);
+
+const char* getPercursoCurtoColor(Percurso percurso);
 
 #endif

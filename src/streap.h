@@ -38,7 +38,6 @@ typedef void *NodeST;
  * (provavelmente um registro) que sao compartilhados entre as 
  * sucessivas invocacoes a esta funcao.
  */
-
 typedef void (*FvisitaNo) (Info i, double x, double y, double mbbX1, double mbbY1, double mbbX2, double mbbY2, void *aux);
 
 /*
@@ -52,7 +51,7 @@ STreap createSTrp(double epsilon);
   Retorna o no´ onde foi inserida a informacao; NULL, caso ja exista informacao com a mesma chave (veja acima)
   inserida.
 */
-NodeST insertSTrp(STreap t, double x, double y,  Info info);
+NodeST insertSTrp(STreap t, double x, double y, Info info);
 
 /*
   Insere na lista resultado os nos da arvore (NodeST) cuja ancora estejam dentro da regiao retangular 
@@ -64,7 +63,7 @@ void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista r
   Retorna a informacao associada ao no´ n, sua ancora (xa,ya) e o retangulo envolvente (mbbX1,mbbY1) -- (mbbX2,mbbY2). 
   Este no´ deve ser um no´ valido (veja acima).
 */
-Info getInfoSTrp(STreap t, NodeST n);
+Info getInfoSTrp(STreap t, NodeST n, double *x, double *y, double *mbbX1, double *mbbY1, double *mbbX2, double *mbbY2);
 
 /*
   Retorna o no da arvore associado a ancora (xa,ya) e o retangulo envolvente; NULL, se tal ancora nao existir.

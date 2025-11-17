@@ -133,7 +133,7 @@ void adjacentNodes(Graph g, Node node, Lista nosAdjacentes);
 void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes);
 
 /*
-    Insere na lista "nomesNodes" os nomes atribuidos aos nos do grafo.
+    Insere na lista "nomesNodes" os nomes atribuidos aos no's do grafo.
 */
 void getNodeNames(Graph g, Lista nomesNodes);
 
