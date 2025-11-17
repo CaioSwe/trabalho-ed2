@@ -46,6 +46,14 @@ void inserirHash(Hash hash, const char* nome, HashItem valor);
 HashItem getHashValue(Hash hash, const char* nome);
 
 /**
+ * @brief Remove o valor associado ao nome na tabela Hash especificada.
+ * @param hash Tabela hash a ser removida o valor.
+ * @param nome String a ser buscada dentro da tabela para remocao.
+ * @return Retorna um ponteiro para o valor associado ao nome.
+ */
+HashItem removeHashValue(Hash hash, const char* nome);
+
+/**
  * @brief Destroi a tabela Hash especificada.
  * @param hash Tabela hash a ser destrui'da.
  * @param fFunc Ponteiro para um funcao de liberacao para os valores inseridos na tabela.

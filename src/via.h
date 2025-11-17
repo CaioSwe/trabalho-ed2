@@ -22,6 +22,9 @@ void blockVia(ArestaVia av);
 // Habilita a aresta.
 void unblockVia(ArestaVia av);
 
+// Muda a velocidade me'dia da aresta.
+void setArestaVM(ArestaVia av, double vm);
+
 // FUNCOES GET
 
 // Retorna o ponto X do ve'rtice.
@@ -30,8 +33,16 @@ double getVerticeViaX(VerticeVia vv);
 // Retorna o ponto Y do ve'rtice.
 double getVerticeViaY(VerticeVia vv);
 
+// Retorna a velocidade me'dia da aresta.
+double getArestaVM(ArestaVia av);
+
+// Retorna o comprimento da aresta.
+double getArestaCMP(ArestaVia av);
+
 // Retorna o valor booleano do estado da aresta.
 bool isArestaEnabled(ArestaVia av);
+
+// FREE
 
 // Libera a memoria alocada para as vias de arestas.
 void freeArestaVia(ArestaVia av, void* extra);

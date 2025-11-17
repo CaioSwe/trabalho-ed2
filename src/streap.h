@@ -23,13 +23,13 @@ reais (da chave de busca) devem ser considerados como iguais. Assim v == w, se |
 
     Algumas operacoes de busca retornam o no´ da arvore onde uma determinada informacao esta' armazenada. 
 Os dados referentes a este no´ podem ser obtidos por outras operacoes, desde que estes nos continuem
-validos. Qualquer remocao posterior faz com que nos (Node) retornados previamente devam ser considerados
+validos. Qualquer remocao posterior faz com que nos (NodeST) retornados previamente devam ser considerados
 invalidos. 
 */
 
 typedef void *STreap; 
 typedef void *Info;
-typedef void *Node;
+typedef void *NodeST;
 
 /**
  * Processa a informacao i associada a um no' da arvore, cuja ancora
@@ -52,10 +52,10 @@ STreap createSTrp(double epsilon);
   Retorna o no´ onde foi inserida a informacao; NULL, caso ja exista informacao com a mesma chave (veja acima)
   inserida.
 */
-Node insertSTrp(STreap t, double x, double y,  Info info);
+NodeST insertSTrp(STreap t, double x, double y,  Info info);
 
 /*
-  Insere na lista resultado os nos da arvore (Node) cuja ancora estejam dentro da regiao retangular 
+  Insere na lista resultado os nos da arvore (NodeST) cuja ancora estejam dentro da regiao retangular 
   de ancora (x,y), largura w e altura h.
 */
 void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista resultado);
@@ -64,24 +64,24 @@ void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista r
   Retorna a informacao associada ao no´ n, sua ancora (xa,ya) e o retangulo envolvente (mbbX1,mbbY1) -- (mbbX2,mbbY2). 
   Este no´ deve ser um no´ valido (veja acima).
 */
-Info getInfoSTrp(STreap t, Node n);
+Info getInfoSTrp(STreap t, NodeST n);
 
 /*
   Retorna o no da arvore associado a ancora (xa,ya) e o retangulo envolvente; NULL, se tal ancora nao existir.
 */
-Node getNodeSTrp(STreap t, double xa, double ya);
+NodeST getNodeSTrp(STreap t, double xa, double ya);
 
 /*
   Altera a informacao associada ao no n que deve ser existente e valido. 
   A ancora  deste no nao sao alterado.
 */
-void updateInfoSTrp(STreap t, Node n, Info i);
+void updateInfoSTrp(STreap t, NodeST n, Info i);
 
 /*
   Remove o no' n da arvore, portanto, o no' n  deve ser considerado invalido.
   Retorna a informacao que estava associada a tal no'.
 */
-Info deleteNodeSTrp(STreap t, Node n);
+Info deleteNodeSTrp(STreap t, NodeST n);
 
 /*
   Remove o no' da arvore cuja chave e´ a coordenada (xa,ya). 
@@ -102,7 +102,7 @@ void printSTrp(STreap t, char *nomeArq);
   Invoca a funcao fVisita (veja descricao acima) em cada no´ visitado
 */
 
- /////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Percorre a a'rvore em largura.
 void percursoLargura(STreap t, FvisitaNo fVisita, void *aux);
@@ -115,14 +115,11 @@ void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
+// FREE
+
 /*
   Desaloca todos os recursos usados pela arvore t.
 */
-void killSTrp(STreap t);
-
-/*
-  Seta a funcao de desalocacao das informacoes dos nos.
-*/
-void setFreeInfoFunctionSTrp(STreap t, freeFunc fFunc);
+void killSTrp(STreap t, freeFunc fFunc, void* extra);
 
 #endif

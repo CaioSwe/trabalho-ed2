@@ -15,13 +15,7 @@
 typedef void* Lista;
 typedef void* Item;
 
-// Ponteiro de funcao freeFunc esta' no cabecalho "fileManager.h".
-
-/**
- * @brief Compara dois itens e verifica sua igualdade.
- * @return Retorna um booleano indicando a igualdade dos itens comparados.
- */
-typedef bool (*compararItens)(Item itemO, Item itemC);
+// Ponteiro de funcao freeFunc e compararItens esta' no cabecalho "fileManager.h".
 
 /**
  * @brief Função de mapeamento que recebe um item e aplica uma operação sob ele.

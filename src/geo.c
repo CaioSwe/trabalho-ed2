@@ -8,7 +8,7 @@
 typedef struct QuadraStr{
     char* id; // Associação usada na tabela hash
 
-    double x, y;
+    double x, y; // Chave usada na insercao da streap
     double width, height;
 
     char* sw;
@@ -17,36 +17,15 @@ typedef struct QuadraStr{
 } QuadraStr;
 
 typedef struct QuadrasStr{
-    int nQuadras;
     int maxQuadras;
+    int nQuadras;
 
     Hash tabelaHash;
-    QuadraStr** quadras;
+    STreap streap;
 } QuadrasStr;
 
-static void inserirQuadrasHash(QuadrasStr* quadras, QuadraStr* quadra){
-    if(quadras->nQuadras + 1 >= quadras->maxQuadras){
-        quadras->maxQuadras *= 2;
-        quadras->quadras = realloc(quadras->quadras, quadras->maxQuadras * sizeof(QuadraStr*));
-    }
-    
-    int* nQuadrasp = (int*)malloc(sizeof(int));
-    if(checkAllocation(nQuadrasp, "Ponteiro inteiro do enderenco de Quadra.")) return;
-    
-    *nQuadrasp = quadras->nQuadras;
-    
-    inserirHash(quadras->tabelaHash, quadra->id, nQuadrasp);
-
-    quadras->quadras[quadras->nQuadras] = quadra;
-    
-    quadras->nQuadras += 1;
-}
-
-void percorrerQuadras(Quadras quadras, runThroughQuadras runFunc, void* extra){
-    QuadrasStr* quadrasStr = (QuadrasStr*)quadras;
-
-    for(int i = 0; i < quadrasStr->nQuadras; i++) runFunc(quadrasStr->quadras[i], extra);
-}
+// Declaracao de escopo de funcoes.
+static void freeQuadra(Quadra quadra, void* extra);
 
 Quadras processGeoFile(const char* path){
     // Checa se o caminho dado contém a extensão .geo
@@ -67,12 +46,7 @@ Quadras processGeoFile(const char* path){
     quadras->maxQuadras = 50;
     quadras->tabelaHash = criaHash(50, true, 0.75f);
 
-    quadras->quadras = (QuadraStr**)malloc(quadras->maxQuadras * sizeof(QuadraStr*));
-    if(checkAllocation(quadras->quadras, "Array de quadras da estrutura 'quadras'.")){
-        destroiHash(quadras->tabelaHash, freeReg, NULL);
-        free(quadras);
-        return NULL;
-    }
+    quadras->streap = createSTrp(0.0000001f);
 
     // Variáveis de operação, ID da quadra e posição, respectivamente.
     char op[256];
@@ -141,7 +115,9 @@ Quadras processGeoFile(const char* path){
             }
             strcpy(quadra->sw, sw);
 
-            inserirQuadrasHash(quadras, quadra);
+            inserirHash(quadras->tabelaHash, quadra->id, quadra);
+            insertSTrp(quadras->streap, quadra->x, quadra->y, quadra);
+            quadras->nQuadras += 1;
         }
     }
     
@@ -152,6 +128,22 @@ Quadras processGeoFile(const char* path){
 
     // Retorna a estrutura Quadras das quadras lidas no .geo
     return quadras;
+}
+
+void percorrerQuadras(Quadras quadras, FvisitaNo runFunc, void* extra){
+    if(quadras == NULL){
+        printf("\n - percorrerQuadras() -> Quadra passada e' nula. - ");
+        return;
+    }
+
+    if(runFunc == NULL){
+        printf("\n - percorrerQuadras() -> Funcao de percursao nula. - ");
+        return;
+    }
+
+    QuadrasStr* qs = (QuadrasStr*)quadras;
+
+    percursoLargura(qs->streap, runFunc, extra);
 }
 
 // FUNÇÕES GET
@@ -190,12 +182,21 @@ const char* getQuadraSW(Quadra quadra){
 
 Quadra getQuadraByID(Quadras quadras, const char* id){
     QuadrasStr* qs = (QuadrasStr*)quadras;
-
-    int* index = (int*)getHashValue(qs->tabelaHash, id);
-    if(index == NULL) return NULL;
-
-    return &(qs->quadras[*index]);
+    return getHashValue(qs->tabelaHash, id);
 }
+
+static Item convertNodeToQuadra(Item item){
+    return getInfoSTrp(NULL, item);
+}
+
+void getQuadrasRegion(Quadras quadras, double x, double y, double w, double h, Lista resultado){
+    Lista nodeSTs = criaLista();
+    getNodeRegiaoSTrp(((QuadrasStr*)quadras)->streap, x, y, w, h, nodeSTs);
+
+    mapTo(nodeSTs, resultado, convertNodeToQuadra, sizeof(QuadraStr));
+}
+
+// FUNCOES SET
 
 void setQuadraCFill(Quadra quadra, const char* cfill){
     QuadraStr* q = (QuadraStr*)quadra;
@@ -217,7 +218,23 @@ void setQuadraCStrk(Quadra quadra, const char* cstrk){
     strcpy(q->cstrk, cstrk);
 }
 
-void freeQuadra(Quadra quadra, void* extra){
+void removerQuadra(Quadras quadras, Quadra quadra){
+    if(quadras == NULL || quadra == NULL){
+        printf("\n - removerQuadra() -> Quadras ou quadra passada e' nula. - ");
+        return;
+    }
+    
+    QuadrasStr* qs = (QuadrasStr*)quadras;
+    QuadraStr* q = (QuadraStr*)quadra;
+
+    NodeST nodest = getNodeSTrp(qs->streap, q->x, q->y);
+    deleteNodeSTrp(qs->streap, nodest);
+    QuadraStr* quadraRem = removeHashValue(qs->tabelaHash, q->id);
+
+    freeQuadra(quadraRem, NULL);
+}
+
+static void freeQuadra(Quadra quadra, void* extra){
     QuadraStr* q = (QuadraStr*)quadra;
 
     free(q->cfill);
@@ -232,14 +249,10 @@ void freeQuadras(Quadras quadras, void* extra){
         printf("\n - freeQuadras() -> Quadra passada e' nula.");
         return;
     }
-
+    
     QuadrasStr* qs = (QuadrasStr*)quadras;
     
-    for(int i = 0; i < qs->nQuadras; i++){
-        freeQuadra(qs->quadras[i], NULL);
-    }
-    free(qs->quadras);
-    destroiHash(qs->tabelaHash, freeReg, NULL);
-    
+    killSTrp(qs->streap, freeQuadra, NULL);
+    destroiHash(qs->tabelaHash, NULL, NULL);
     free(qs);
 }

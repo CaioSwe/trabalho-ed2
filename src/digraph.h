@@ -148,6 +148,13 @@ void getEdges(Graph g, Lista arestas);
 void getAllVerticesInfo(Graph g, Lista allInfo);
 
 /*
+    As pro'ximas funcoes percorrem o grafo em profundidade e largura, respectivamente.
+    Ambas as funcoes utilizam funcoes de callback com escopo especificadas no inicio do cabecalho.
+*/
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
     Faz percurso em profundidade sobre g, a partir do no' node, classificando 
     as arestas do grafo, invocando a respectiva funcao.
     A busca em profundidade, eventualmente, pode produzir uma floresta.
@@ -161,9 +168,41 @@ bool dfs(Graph g, Node node, procEdge treeEdge, procEdge forwardEdge, procEdge r
 */
 bool bfs(Graph g, Node node, procEdge discoverNode, void *extra);
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+// DIJKSTRA
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef void* Caminho;
+
+/*
+    Utiliza o algoritmo de Dijkstra para encontrar o menor caminho possivel entre dois
+    pontos no grafo.
+    Retorna as informacoes da busca de menor caminho.
+*/
+Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getDistanceFunc);
+
+/*
+    Retorna a lista de arestas associada ao caminho.
+*/
+Lista getDijkstraList(Caminho caminho);
+
+/*
+    Retorna a distancia total associada ao caminho dijkstra.
+*/
+double getDijkstraDistance(Caminho caminho);
+
+// FREE
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
 /*
     Destroi o grafo g.
 */
 void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc);
+
+/*
+    Funcao de liberacao do caminho.
+*/
+void freeCaminho(Caminho caminho, freeFunc freeEdgeFunc);
 
 #endif

@@ -14,17 +14,6 @@
 */
 
 // Verificar condicao de insercao 'a direita.
-// Implementar sorteio da pioridade do Node.
-// Implementar BoundingBox
-
-// Funcoes para terminar:
-// removeSTrpRec
-// prioridade
-// insertNodeByKeySTrp (eu acho)
-// insertSTrp
-// getNodeRegiaoSTrp
-// deleteNodeSTrp
-// etc
 
 typedef struct BoundingBox{
     double x1, y1;
@@ -53,6 +42,9 @@ typedef struct STreapStr{
     freeFunc fFunc;
 }STreapStr;
 
+// Declaracao de escopo de funcoes.
+static void freeNodeSTrp(NodeStr* node, freeFunc fFunc);
+
 STreap createSTrp(double epsilon){
     STreapStr* st = (STreapStr*)malloc(sizeof(STreapStr));
     if(checkAllocation(st, "STreap.")) return NULL;
@@ -61,6 +53,8 @@ STreap createSTrp(double epsilon){
     st->altura = 0;
     st->nRoot = 0;
     st->epsilon = epsilon;
+
+    st->fFunc = NULL;
 
     // Geracao de prioridade aleatoria.
     srand((unsigned)time(NULL));
@@ -97,9 +91,38 @@ static NodeStr* createNodeSTrp(double x, double y, Info info){
     return newNode;
 }
 
-static void rotateRightSTrp(STreap t, Node node){
+static void updateBoundingBox(NodeStr* node){
+    if(node == NULL) return;
+
+    node->box->x1 = node->x;
+    node->box->x2 = node->x;
+    node->box->y1 = node->y;
+    node->box->y2 = node->y;
+
+    if(node->esq != NULL){
+        node->box->x1 = fmin(node->box->x1, node->esq->box->x1);
+        node->box->x2 = fmax(node->box->x2, node->esq->box->x2);
+        node->box->y1 = fmin(node->box->y1, node->esq->box->y1);
+        node->box->y2 = fmax(node->box->y2, node->esq->box->y2);
+    }
+    if(node->dir != NULL){
+        node->box->x1 = fmin(node->box->x1, node->dir->box->x1);
+        node->box->x2 = fmax(node->box->x2, node->dir->box->x2);
+        node->box->y1 = fmin(node->box->y1, node->dir->box->y1);
+        node->box->y2 = fmax(node->box->y2, node->dir->box->y2);
+    }
+}
+
+static void updateBoundingBoxUp(NodeStr* node){
+    while(node != NULL){
+        updateBoundingBox(node);
+        node = node->pai;
+    }
+}
+
+static void rotateRightSTrp(STreap t, NodeST node){
     if(node == NULL){
-        printf("\n - rotateRightSTrp() -> Node passado e' nulo.");
+        printf("\n - rotateRightSTrp() -> NodeST passado e' nulo.");
         return;
     }
 
@@ -125,11 +148,14 @@ static void rotateRightSTrp(STreap t, Node node){
         STreapStr* st = (STreapStr*)t;
         st->raiz = q;
     }
+
+    updateBoundingBox(p);
+    updateBoundingBoxUp(q);
 }
 
-static void rotateLeftSTrp(STreap t, Node node){
+static void rotateLeftSTrp(STreap t, NodeST node){
     if(node == NULL){
-        printf("\n - rotateLeftSTrp() -> Node passado e' nulo.");
+        printf("\n - rotateLeftSTrp() -> NodeST passado e' nulo.");
         return;
     }
 
@@ -145,7 +171,7 @@ static void rotateLeftSTrp(STreap t, Node node){
 
     q->pai = p->pai;
     p->pai = q;
-    aux->pai = p;
+    if(aux != NULL) aux->pai = p;
 
     if(q->pai){
         if(q->pai->esq == p) q->pai->esq = q;
@@ -155,9 +181,12 @@ static void rotateLeftSTrp(STreap t, Node node){
         STreapStr* st = (STreapStr*)t;
         st->raiz = q;
     }
+
+    updateBoundingBox(p);
+    updateBoundingBoxUp(q);
 }
 
-static Node insertNodeByKeySTrp(STreap t, double x, double y, Info info){
+static NodeST insertNodeByKeySTrp(STreap t, double x, double y, Info info){
     if(t == NULL){
         printf("\n - insertNodeByKeySTrp() -> Treap passada e' nula. -");
         return NULL;
@@ -167,6 +196,8 @@ static Node insertNodeByKeySTrp(STreap t, double x, double y, Info info){
 
     NodeStr* newNode = createNodeSTrp(x, y, info);
     if(newNode == NULL) return NULL;
+
+    updateBoundingBoxUp(newNode);
 
     if(st->raiz == NULL){
         st->raiz = newNode;
@@ -210,7 +241,7 @@ static Node insertNodeByKeySTrp(STreap t, double x, double y, Info info){
 
 static void rebalancearSTrp(STreap t, NodeStr* node){
     if(node == NULL){
-        printf("\n - rebalancearSTrp() -> Node passado e' nulo. -");
+        printf("\n - rebalancearSTrp() -> NodeST passado e' nulo. -");
         return;
     }
 
@@ -226,7 +257,7 @@ static void rebalancearSTrp(STreap t, NodeStr* node){
     }
 }
 
-Node insertSTrp(STreap t, double x, double y, Info info){
+NodeST insertSTrp(STreap t, double x, double y, Info info){
     if(t == NULL){
         printf("\n - insertSTrp() -> Treap passada e' nula. - ");
         return NULL;
@@ -237,43 +268,34 @@ Node insertSTrp(STreap t, double x, double y, Info info){
 
     rebalancearSTrp(t, newNode);
 
-    // Calcular novo BoundingBox
+    updateBoundingBoxUp(newNode);
 
     return newNode;
 }
 
-static int checkCollisionBoxes(BoundingBox b1, BoundingBox b2){
-    return 1;
+// Checa se todos os pontos de b2 estao completamente dentro de b1.
+static bool checkInsideBoxes(BoundingBox b1, BoundingBox b2){
+    return (b2.x1 >= b1.x1 && b2.x2 <= b1.x2 && b2.y1 >= b1.y1 && b2.y2 <= b1.y2);
 }
 
-static void addToLista(Item item, void* aux){
-    NodeStr* node = (NodeStr*)item;
-    Lista l = (Lista)aux;
-
-    inserirInicio(l, node);
+// Checa se os pontos de b2 estao completamente fora de b1.
+static bool checkOutsideBoxes(BoundingBox b1, BoundingBox b2){
+    return (b2.x2 < b1.x1 || b2.x1 > b1.x2 || b2.y2 < b1.y1 || b2.y1 > b1.y2);
 }
 
 static void getNodeRegiaoSTrpRec(STreapStr* tr, NodeStr* node, BoundingBox rec, Lista resultado){
     if(node == NULL) return;
 
-    int collision = checkCollisionBoxes(*node->box, rec);
+    // insere o node atual na lista se estiver dentro da regiao.
+    if(checkInsideBoxes(rec, *node->box)) inserirInicio(resultado, node);
 
-    switch (collision){
-        case 1:
-            // rec esta' dentro de node->box.
-            getNodeRegiaoSTrpRec(tr, node->esq, rec, resultado);
-            break;
-        case 2:
-            // rec esta' cruzando node->box.
-            // Inicia a busca dos no's a partir deste.
-            percursoSimetricoRec(node, addToLista, resultado);
-            break;
-        case 3:
-            // rec esta' fora de node->box.
-            getNodeRegiaoSTrpRec(tr, node->dir, rec, resultado);
-            break;
-        default:
-            break;
+    // Checa se o no' esquerdo ou direito estao completamente/parcialmente dentro da regiao.
+    // Se estiverem, percorre os no's dentro das suba'rvores.
+    if(node->esq != NULL && !checkOutsideBoxes(rec, *node->esq->box)){
+        getNodeRegiaoSTrpRec(tr, node->esq, rec, resultado);
+    }
+    if(node->dir != NULL && !checkOutsideBoxes(rec, *node->dir->box)){
+        getNodeRegiaoSTrpRec(tr, node->dir, rec, resultado);
     }
 }
 
@@ -285,20 +307,28 @@ void getNodeRegiaoSTrp(STreap t, double x, double y, double w, double h, Lista r
 
     STreapStr* tr = (STreapStr*)t;
 
+    if(tr->raiz == NULL){
+        printf("\n - getNodeRegiaoSTrp() -> Treap vazia. -");
+        return;
+    }
+
+    // Se a regiao estiver completamente fora do boundingbox da raiz, retorna a lista sem nenhuma busca/insercao.
+    if(checkOutsideBoxes(*tr->raiz->box, (BoundingBox){x, y, x+w, y+h})) return;
+
     getNodeRegiaoSTrpRec(tr, tr->raiz, (BoundingBox){x, y, x+w, y+h}, resultado);
 }
 
-Info getInfoSTrp(STreap t, Node n){
+Info getInfoSTrp(STreap t, NodeST n){
     return ((NodeStr*)n)->info;
 }
 
-static Node getNodeSTrpRec(NodeStr* node, double x, double y, double epsilon){
+static NodeST getNodeSTrpRec(NodeStr* node, double x, double y, double epsilon){
     if(node == NULL) return NULL;
     
-    if((node->x < x) || (fabs(node->x - x) <= epsilon && node->y < y)){
+    if((x < node->x) || ((fabs(x - node->x) <= epsilon) && (y < node->y))){
         return getNodeSTrpRec(node->esq, x, y, epsilon);
     }
-    else if(!((fabs(x - node->x) <= epsilon) && (fabs(y - node->y) <= epsilon))){
+    else if((node->x < x) || ((fabs(x - node->x) <= epsilon) && (node->y < y))){
         return getNodeSTrpRec(node->dir, x, y, epsilon);
     }
     else{
@@ -306,7 +336,7 @@ static Node getNodeSTrpRec(NodeStr* node, double x, double y, double epsilon){
     }
 }
 
-Node getNodeSTrp(STreap t, double xa, double ya){
+NodeST getNodeSTrp(STreap t, double xa, double ya){
     STreapStr* tr = (STreapStr*)t;
     
     if(tr == NULL) return NULL;
@@ -314,7 +344,7 @@ Node getNodeSTrp(STreap t, double xa, double ya){
     return getNodeSTrpRec(tr->raiz, xa, ya, tr->epsilon);
 }
 
-void updateInfoSTrp(STreap t, Node n, Info i){
+void updateInfoSTrp(STreap t, NodeST n, Info i){
     ((NodeStr*)n)->info = i;
 }
 
@@ -324,11 +354,8 @@ static void rebalancearDeleteNodeSTrp(STreapStr* tr, NodeStr* node){
         return;
     }
 
-    NodeStr* dir = node->dir;
-    NodeStr* esq = node->esq;
-
-    while(esq != NULL && dir != NULL){
-        if(esq->prioridade > dir->prioridade) rotateRightSTrp(tr, node);
+    while(node->esq != NULL && node->dir != NULL){
+        if(node->esq->prioridade > node->dir->prioridade) rotateRightSTrp(tr, node);
         else rotateLeftSTrp(tr, node);
     }
 
@@ -343,7 +370,7 @@ static void rebalancearDeleteNodeSTrp(STreapStr* tr, NodeStr* node){
     if(filho != NULL) filho->pai = node->pai;
 }
 
-Info deleteNodeSTrp(STreap t, Node n){
+Info deleteNodeSTrp(STreap t, NodeST n){
     if(t == NULL || n == NULL){
         printf("\n - deleteNodeSTrp() -> Uma ou mais informacoes passadas sao nulas. -");
         return NULL;
@@ -354,7 +381,7 @@ Info deleteNodeSTrp(STreap t, Node n){
 
     Info i = root->info;
 
-    rebalancearDeleteNodeSTrp(t, root);
+    rebalancearDeleteNodeSTrp(tr, root);
 
     freeNodeSTrp(root, tr->fFunc);
     return i;
@@ -385,6 +412,11 @@ void percursoLargura(STreap t, FvisitaNo fVisita, void *aux){
     }
 
     STreapStr* tr = (STreapStr*)t;
+
+    if(tr->raiz == NULL){
+        printf("\n - percursoLargura() -> Treap vazia. -");
+        return;
+    }
 
     // Lista usada como uma fila.
     // (Insercao no comeco e remocao no fim)
@@ -451,18 +483,29 @@ void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux){
 
     STreapStr* tr = (STreapStr*)t;
 
-    percursoSimetricoRec(tr->raiz, fVisita, aux);
+    percursoProfundidadePreRec(tr->raiz, fVisita, aux);
 }
 
-static void killSTrpRec(NodeStr* node, freeFunc fFunc){
+static void freeNodeSTrp(NodeStr* node, freeFunc fFunc){
+    if(node == NULL){
+        printf("\n - freeNodeSTrp() -> NodeST passado e' nulo. -");
+        return;
+    }
+
+    if(fFunc != NULL) fFunc(node->info, NULL);
+    free(node->box);
+    free(node);
+}
+
+static void killSTrpRec(NodeStr* node, freeFunc fFunc, void* extra){
     if(node == NULL) return;
 
-    if(node->esq != NULL) killSTrpRec(node->esq, fFunc);
-    if(node->dir != NULL) killSTrpRec(node->dir, fFunc);
+    if(node->esq != NULL) killSTrpRec(node->esq, fFunc, extra);
+    if(node->dir != NULL) killSTrpRec(node->dir, fFunc, extra);
     if(node != NULL) freeNodeSTrp(node, fFunc);
 }
 
-void killSTrp(STreap t){
+void killSTrp(STreap t, freeFunc fFunc, void* extra){
     if(t == NULL){
         printf("\n - killSTrp() -> Treap passada e' nula. -");
         return;
@@ -470,28 +513,6 @@ void killSTrp(STreap t){
 
     STreapStr* tr = (STreapStr*)t;
 
-    killSTrpRec(tr->raiz, tr->fFunc);
-}
-
-static void freeNodeSTrp(Node node, freeFunc fFunc){
-    if(node == NULL){
-        printf("\n - freeNodeSTrp() -> Node passado e' nulo. -");
-        return;
-    }
-
-    NodeStr* n = (NodeStr*)node;
-
-    fFunc(n->info, NULL);
-    free(n->box);
-    free(n);
-}
-
-void setFreeInfoFunctionSTrp(STreap t, freeFunc fFunc){
-    if(t == NULL){
-        printf("\n - setFreeFunctionSTrp() -> Treap passada e' nula. -");
-        return;
-    }
-
-    STreapStr* tr = (STreapStr*)t;
-    tr->fFunc = fFunc;
+    killSTrpRec(tr->raiz, fFunc, extra);
+    free(tr);
 }

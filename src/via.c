@@ -139,6 +139,10 @@ void unblockVia(ArestaVia av){
     ((ArestaViaStr*)av)->habilitada = true;
 }
 
+void setArestaVM(ArestaVia av, double vm){
+    ((ArestaViaStr*)av)->vm = vm;
+}
+
 // FUNÇÕES GET
 
 double getVerticeViaX(VerticeVia vv){
@@ -147,6 +151,14 @@ double getVerticeViaX(VerticeVia vv){
 
 double getVerticeViaY(VerticeVia vv){
     return ((VerticeViaStr*)vv)->y;
+}
+
+double getArestaVM(ArestaVia av){
+    return ((ArestaViaStr*)av)->vm;
+}
+
+double getArestaCMP(ArestaVia av){
+    return ((ArestaViaStr*)av)->cmp;
 }
 
 bool isArestaEnabled(ArestaVia av){

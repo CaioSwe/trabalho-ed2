@@ -4,6 +4,7 @@
 
 #include "qry.h"
 #include "geo.h"
+#include "via.h"
 
 // MUDAR TAMANHO DA TABELA HASH DOS COMANDOS DE BLOQUEIO PARA ADAPTABILIDADE.
 
@@ -15,18 +16,21 @@ typedef struct Ponto{
 }Ponto;
 
 // Estrutura de percurso com as informacoes do percurso associado.
-typedef struct Percurso{
+typedef struct PercursoStr{
     Ponto* origem;
     Ponto* destino;
 
     char cmc[256];
     char cmr[256];
-}Percurso;
+
+    Caminho caminhoCurto;
+    Caminho caminhoRapido;
+}PercursoStr;
 
 // Estrutura a ser armazenada na tabela Hash para os comandos [blq, rbl].
 typedef struct BloqueioStr{
-    Lista lista;
-    char* bloqueio;
+    Lista lista; // Lista das arestas desabilitadas [Edge]
+    char* bloqueio; // Comando de bloqueio [sn, ns, lo, ol]
 }BloqueioStr;
 
 static void freeBloqueio(void* bloqueio, void* extra){
@@ -36,20 +40,22 @@ static void freeBloqueio(void* bloqueio, void* extra){
     free(bloqueiostr->bloqueio);
 }
 
-// Desabilitar as todas as arestas que (estao dentro / cruzam) a regiao especificada.
-static void removerQuadras(Item item, void* extra){
-    // desabillitarArestas(item);
-    // ou alguma coisa assim
-}
+typedef struct ResourcesSentido{
+    Graph graph;
+    char* sentido;
+}ResourcesSentido;
 
 // Desabilita todas as arestas passadas para esta funcao.
 // Possíveis valores de sentido: ns (Norte-Sul), sn (Sul-Norte), lo (Leste-Oeste), ol (Oeste-Leste).
 static void bloquearSentido(Item item, void* extra){
-    char* sentido = (char*)extra;
+    ResourcesSentido* res = (ResourcesSentido*)extra;
     Node node = (Node)item;
 
-    // 
+    Lista adjacentes = criaLista();
 
+    adjacentEdges(res->graph, node, adjacentes);
+
+    percorrerLista(adjacentes, NULL, NULL);
     // blockAresta(item, sentido);
     // ou alguma coisa assim
 }
@@ -64,7 +70,34 @@ static void desbloquearSentido(Item item, void* extra){
     // ou alguma coisa assim
 }
 
-Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* path){
+static void removerQuadraLista(Item item, void* extra){
+    Quadra q = (Quadra)item;
+    Quadras qs = (Quadras)extra;
+
+    printf("\nQ = (%s)", getQuadraID(q));
+    setQuadraCFill(q, "#660080");
+
+    //removerQuadra(qs, q);
+}
+
+// Aumenta a velocidade media das arestas passadas.
+static void aumentarVmArestas(Graph g, Edge e, int td, int tf, void* extra){
+    Info info = getEdgeInfo(g, e);
+    setArestaVM(info, *(double*)extra);
+    setEdgeInfo(g, e, info);
+}
+
+// Funcao para pegar a velocidade media de uma aresta na lista (Dijkstra).
+double getArestaVMVoid(Edge e, void* extra){
+    return getArestaVM(getEdgeInfo(NULL, e));
+}
+
+// Funcao para pegar o comprimento de uma aresta na lista (Dijkstra).
+double getArestaCMPVoid(Edge e, void* extra){
+    return getArestaCMP(getEdgeInfo(NULL, e));
+}
+
+Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
     // Checa se o caminho dado contam a extensao .qry
     if(strstr(path, ".qry") == NULL){
         printf("\n- processQryFile() -> path: \"%s\" nao e' um arquivo .qry -", path);
@@ -105,7 +138,7 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
     // Cria uma tabela Hash para a associacao de nome-lista para os comandos de bloqueio de remocao de bloqueio.
     Hash tabelaHash = criaHash(50, true, 0.75f);
 
-    Percurso* percurso = (Percurso*)malloc(sizeof(Percurso));
+    PercursoStr* percurso = (PercursoStr*)malloc(sizeof(PercursoStr));
     if(checkAllocation(percurso, "Estrutura de percurso.")){
         destroiHash(tabelaHash, freeBloqueio, NULL);
         return NULL;
@@ -113,12 +146,18 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
 
     percurso->origem = NULL;
     percurso->destino = NULL;
+    percurso->caminhoCurto = NULL;
+
+    int in = 0;
 
     // Itera sobre as linhas do arquivo .qry
     while(fscanf(fEntrada, "%s", op) > 0){
+        printf("\nLendo [%d] operacao.", in);
+        in += 1;
+
         if(strcmp(op, "@o?") == 0){
             // Pega [cep, face, num] da operacao de origem.
-            fscanf(fEntrada, "%s %s %d\n", cep, face, &num);
+            fscanf(fEntrada, "%s %c %d\n", cep, &face, &num);
 
             // Pega o node com o cep registrado no grafo.
             Node node = getNode(grafo, cep);
@@ -142,9 +181,9 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
             Lista lista = criaLista();
 
             // Pega a lista das quadras dentro da regiao [x, y, w, h].
-            getNodeRegiaoSTrp(arvore, x, y, w, h, lista);
-            // Percorre a lista das quadras da regiao, desabilitando-as.
-            percorrerLista(lista, removerQuadras, NULL);
+            getQuadrasRegion(quadras, x, y, w, h, lista);
+            // Percorre a lista das quadras dentro da regiao, excluindo-as.
+            percorrerLista(lista, removerQuadraLista, quadras);
 
             limparLista(lista, NULL, NULL);
         }
@@ -165,11 +204,11 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
         
             Lista lista = criaLista();
 
-            // Pega as quadras dentro da regiao [x, y, w, h].
-            getNodeRegiaoSTrp(arvore, x, y, w, h, lista);
+            // Pega os vertices dentro da regiao [x, y, w, h].
+            //getNodeRegiaoSTrp(NULL, x, y, w, h, lista);
 
             // Percorre a lista das quadras encontradas, bloqueando-as no sentido fornecido.
-            percorrerLista(lista, bloquearSentido, sentido);
+            //percorrerLista(lista, bloquearSentido, sentido);
 
             // Inicializa a estrutura de bloqueios a ser armazenada na tabela Hash.
             BloqueioStr* listaBlq = (BloqueioStr*)malloc(sizeof(BloqueioStr));
@@ -207,39 +246,58 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
         }
         else if(strcmp(op, "b") == 0){
             // Pega [x, y, fator] da operacao de boost(?)
-            fscanf(fEntrada, "%lf %lf %s\n", &x, &y, fator);
-        
-            // Pega o node mais praximo das coordenadas.
-            // getClosestNode(graph, x, y);
+            fscanf(fEntrada, "%lf %lf %lf\n", &x, &y, &fator);
+
+            // Pega o node mais pro'ximo das coordenadas.
+            // Node node = getClosestNode(grafo, x, y);
 
             // Comeca o percurso em largura do node.
-            // bfs(g, node, discoverNode, extra)
+            // bfs(grafo, node, aumentarVmArestas, &fator);
         }
         else if(strcmp(op, "p?") == 0){
             // Pega [cep, face, num, cmc, cmr] da operacao de percurso.
             fscanf(fEntrada, "%s %c %d %s %s\n", cep, &face, &num, cmc, cmr);
-            
-            if(percurso->origem == NULL){
-                printf("\n- processQryFile() -> ponto de origem nao definido antes da operacao 'p?'. -");
-                continue;
-            }
 
-            percurso->destino = (Ponto*)malloc(sizeof(Ponto));
-            if(checkAllocation(percurso->destino, "Ponto de destino do percurso.")){
-                if(percurso->origem) free(percurso->origem);
-                destroiHash(tabelaHash, freeBloqueio, NULL);
-                free(percurso);
-                return NULL;
-            }
+            // if(percurso->origem == NULL){
+            //     printf("\n- processQryFile() -> ponto de origem nao definido antes da operacao 'p?'. -");
+            //     if(percurso->origem) free(percurso->origem);
+            //     destroiHash(tabelaHash, freeBloqueio, NULL);
+            //     free(percurso);
+            //     return NULL;
+            // }
 
-            percurso->destino->node = getNode(grafo, cep);
-            percurso->destino->face = face;
-            percurso->destino->num = num;
+            // percurso->destino = (Ponto*)malloc(sizeof(Ponto));
+            // if(checkAllocation(percurso->destino, "Ponto de destino do percurso.")){
+            //     if(percurso->origem) free(percurso->origem);
+            //     destroiHash(tabelaHash, freeBloqueio, NULL);
+            //     free(percurso);
+            //     return NULL;
+            // }
 
-            strcpy(percurso->cmc, cmc);
-            strcpy(percurso->cmr, cmr);
+            // // Associa todos os valores passados ao destino.
+            // percurso->destino->node = getNode(grafo, cep);
+            // percurso->destino->face = face;
+            // percurso->destino->num = num;
 
-            // continuar (dijkstra)
+            // strcpy(percurso->cmc, cmc);
+            // strcpy(percurso->cmr, cmr);
+
+            // // Calcula o caminho mais curto e o caminho mais ra'pido com Dijkstra (implementacao no final de digraph.c).
+            // percurso->caminhoCurto = getShortestPath(grafo, percurso->origem->node, percurso->destino->node, getArestaCMPVoid);
+            // percurso->caminhoRapido = getShortestPath(grafo, percurso->origem->node, percurso->destino->node, getArestaVMVoid);
+        
+            // // Caso algum dos caminhos for nulo, aborta o retorno do percurso.
+            // if(percurso->caminhoCurto == NULL || percurso->caminhoRapido == NULL){
+            //     if(percurso->caminhoCurto != NULL) freeCaminho(percurso->caminhoCurto, freeArestaVia);
+            //     if(percurso->caminhoRapido != NULL) freeCaminho(percurso->caminhoRapido, freeArestaVia);
+
+            //     free(percurso->origem);
+            //     free(percurso->destino);
+            //     destroiHash(tabelaHash, freeBloqueio, NULL);
+            //     free(percurso);
+
+            //     return NULL;
+            // }
         }
     }
 
@@ -248,5 +306,15 @@ Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* pa
     // Fecha o arquivo de entrada
     fclose(fEntrada);
     
-    return criaLista();
+    return percurso;
+}
+
+Caminho getCaminhoCurto(Percurso percurso){
+    PercursoStr* p = (PercursoStr*)percurso;
+    return p->caminhoCurto;
+}
+
+Caminho getCaminhoRapido(Percurso percurso){
+    PercursoStr* p = (PercursoStr*)percurso;
+    return p->caminhoRapido;
 }

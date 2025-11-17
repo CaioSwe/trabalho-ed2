@@ -3,6 +3,7 @@
 
 #include "lista.h"
 #include "hash.h"
+#include "streap.h"
 
 /**
  * Cabeçalho dedicado à leitura do arquivo .geo,
@@ -20,12 +21,6 @@ typedef void* Quadra;
 typedef void* Quadras;
 
 /**
- * @brief Função que recebe uma quadra e aplica uma operação qualquer sob ele sem modificação.
- * @return Não há retorno de algum valor.
- */
-typedef void (*runThroughQuadras) (Quadra quadra, void* extra);
-
-/**
  * @brief Processa o arquivo .geo passado como parâmetro e insere as formas adquiridas em uma lista de retorno com formas do tipo Quadra.
  * 
  * @param path String de caminho do arquivo .geo.
@@ -35,12 +30,12 @@ Quadras processGeoFile(const char* path);
 
 /**
  * @brief Percorre as quadras e passa cada quadra para a função F.
- * 
- * @param f Ponteiro para uma função externa que têm como paramêtro uma Quadra e um ponteiro para uma variável auxiliar.
+ * @param quadras 'Quadras' associada aos valores a serem percorridos.
+ * @param runFunc Ponteiro para uma função externa que têm como paramêtro uma Quadra e um ponteiro para uma variável auxiliar.
  * @param extra Ponteiro para uma variável qualquer auxiliar.
  * @return Não há retorno de algum valor.
 */
-void percorrerQuadras(Quadras quadras, runThroughQuadras runFunc, void* extra);
+void percorrerQuadras(Quadras quadras, FvisitaNo runFunc, void* extra);
 
 // FUNÇÕES GET
 
@@ -71,6 +66,9 @@ const char* getQuadraSW(Quadra quadra);
 // Retorna a quadra associada ao id fornecido.
 Quadra getQuadraByID(Quadras quadras, const char* id);
 
+// Insere as quadras que estao dentro da regiao na lista passada.
+void getQuadrasRegion(Quadras quadras, double x, double y, double w, double h, Lista resultado);
+
 // FUNÇÕES SET
 
 // Define a cor de preenchimento da quadra.
@@ -79,9 +77,10 @@ void setQuadraCFill(Quadra quadra, const char* cfill);
 // Define a cor de borda da quadra.
 void setQuadraCStrk(Quadra quadra, const char* cstrk);
 
+// Remove a quadra especifica da estrutura Quadras.
+void removerQuadra(Quadras quadras, Quadra quadra);
 
-// Funcao de liberacao de memoria da quadra.
-void freeQuadra(Quadra quadra, void* extra);
+// FUNCOES FREE
 
 // Funcao de liberacao de memoria das quadras.
 void freeQuadras(Quadras quadras, void* extra);

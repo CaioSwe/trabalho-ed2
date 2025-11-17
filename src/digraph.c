@@ -5,28 +5,26 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <float.h>
 
 #include "fileManager.h"
+#include "priorityQueue.h"
+#include "streap.h"
 
-// CHECAR ALOCAÇÃO
-// CHECAR ALOCAÇÃO
-// CHECAR ALOCAÇÃO
-
-// CHECAR CÓPIA DE STRING (NOME)
-
-// FAZER VERIFICAÇÃO DE CONVERSÃO E CHAR
-
+// Ve'rtice
 typedef struct Vert{
     char* nome;
     Info info;
 } Vert;
 
+// Aresta
 typedef struct EdgeStr{
     Node to;
     Node from;
     Info info;
 } EdgeStr;
 
+// Grafo
 typedef struct GraphStr{
     int maxVert;
 
@@ -35,7 +33,7 @@ typedef struct GraphStr{
     
     Hash tabelaHash;
     Vert* vertices;
-    Lista* listaAdj;
+    Lista* listaAdj; // listaAdj[Node] -> Lista de Edges
 } GraphStr;
 
 // Cria um novo grafo.
@@ -445,17 +443,197 @@ void getAllVerticesInfo(Graph g, Lista allInfo){
     }
 }
 
-// ?
+typedef enum Cores{
+    BRANCO,
+    CINZA,
+    PRETO
+}Cores;
 
+// Estruturas dfs
+typedef struct ResourcesDfs{
+    GraphStr* graph;
+    int tempo;
+    int* tf;
+    int* td;
+    Cores* cor;
+    procEdge treeEdge;
+    procEdge forwardEdge;
+    procEdge returnEdge;
+    procEdge crossEdge;
+    dfsRestarted newTree;
+    void *extra;
+}ResourcesDfs;
+
+// Declaracoes de escopo
+static void dfsVisit(GraphStr* graph, Node node, void* extra);
+static void dfsVisitInner(Item item, void* extra);
+
+
+static void dfsVisitInner(Item item, void* extra){
+    ResourcesDfs* res = (ResourcesDfs*)extra;
+    Edge e = (Edge)item;
+    Node to = getToNode(res->graph, e);
+    Node from = getFromNode(res->graph, e);
+
+    if(res->cor[to] == BRANCO){
+        if(res->treeEdge) res->treeEdge(res->graph, e, res->td[from], res->tf[to], res->extra);
+        dfsVisit(res->graph, to, extra);
+    }
+    else if(res->cor[to] == CINZA){
+        if(res->returnEdge) res->returnEdge(res->graph, e, res->td[from], res->tf[to], res->extra);
+    }
+    else{
+        if(res->td[from] < res->td[to]){ 
+            if(res->forwardEdge) res->forwardEdge(res->graph, e, res->td[from], res->tf[to], res->extra);
+        }
+        else if(res->crossEdge) res->crossEdge(res->graph, e, res->td[from], res->tf[to], res->extra);
+    }
+}
+
+static void dfsVisit(GraphStr* graph, Node node, void* extra){
+    ResourcesDfs* res = (ResourcesDfs*)extra;
+
+    res->tempo += 1;
+    res->cor[node] = CINZA;
+    res->td[node] = res->tempo;
+
+    percorrerLista(graph->listaAdj[node], dfsVisitInner, res);
+
+    res->tempo += 1;
+    res->cor[node] = PRETO;
+    res->tf[node] = res->tempo;
+}
+
+// Busca em profundidade
 bool dfs(Graph g, Node node, procEdge treeEdge, procEdge forwardEdge, procEdge returnEdge, procEdge crossEdge, dfsRestarted newTree, void *extra){
-    return false;
+    if(g == NULL){
+        printf("\n - dfs() -> Grafo passado e' nulo. -");
+        return false;
+    }
+    
+    GraphStr* graph = (GraphStr*)g;
+    
+    if(node < 0 || node >= graph->nVert){
+        printf("\n - dfs() -> Node fora dos limites do grafo. -");
+        return false;
+    }
+    
+    Cores* cor = malloc(sizeof(Cores) * graph->nVert);
+    int* tf = malloc(sizeof(int) * graph->nVert);
+    int* td = malloc(sizeof(int) * graph->nVert);
+
+    for(int i = 0; i < graph->nVert; i++){
+        cor[i] = BRANCO;
+        tf[i] = 0;
+        td[i] = 0;
+    }
+
+    ResourcesDfs res = {
+        graph,
+        0,
+        tf,
+        td,
+        cor,
+        treeEdge,
+        forwardEdge,
+        returnEdge,
+        crossEdge,
+        newTree,
+        extra
+    };
+
+    for(int n = node; n < graph->nVert; n++){
+        if(cor[n] == BRANCO){
+            if(newTree) newTree(graph, extra);
+            dfsVisit(graph, n, &res);
+        }
+    }
+
+    free(cor);
+    free(tf);
+    free(td);
+
+    return true;
 }
 
+// Estruturas bfs
+typedef struct ResourcesBfs{
+    GraphStr* graph;
+    Cores* cor;
+    procEdge discoverNode;
+    Lista lista;
+    void* extra;
+}ResourcesBfs;
+
+static void discNodes(Item item, void* extra){
+    ResourcesBfs* res = (ResourcesBfs*)extra;
+
+    Node* nodeptr = malloc(sizeof(Node));
+    checkAllocation(nodeptr, "Ponteiro para inteiro em bfs.");
+
+    *nodeptr = getToNode(res->graph, (Edge)item);
+
+    if(res->cor[*nodeptr] == BRANCO){
+        res->cor[*nodeptr] = CINZA;
+        
+        inserirInicio(res->lista, nodeptr);
+
+        if(res->discoverNode != NULL) res->discoverNode(res->graph, (Edge)item, 0, 0, res->extra);
+    }
+}
+
+// Busca em largura
 bool bfs(Graph g, Node node, procEdge discoverNode, void *extra){
-    return false;
-}
+    if(g == NULL){
+        printf("\n - bfs() -> Grafo passado e' nulo. -");
+        return false;
+    }
+    
+    GraphStr* graph = (GraphStr*)g;
+    
+    if(node < 0 || node >= graph->nVert){
+        printf("\n - bfs() -> Node fora dos limites do grafo. -");
+        return false;
+    }
 
-// ?
+    Cores* cor = malloc(sizeof(Cores) * graph->nVert);
+
+    for(int i = 0; i < graph->nVert; i++){
+        cor[i] = BRANCO;
+    }
+    
+    cor[node] = CINZA;
+    
+    // Cria uma lista para ser usada como uma fila.
+    Lista lista = criaLista();
+    if(lista == NULL) return false;
+
+    Node* nodep = (Node*)malloc(sizeof(Node));
+    if(checkAllocation(nodep, "Ponteiro para inteiro em bfs.")) return false;
+    *nodep = node;
+
+    inserirInicio(lista, nodep);
+
+    ResourcesBfs res = {
+        graph,
+        cor,
+        discoverNode,
+        lista,
+        extra
+    };
+
+    while(!isListaVazia(lista)){
+        Node* nodeptr = removerFim(lista);
+
+        percorrerLista(graph->listaAdj[*nodeptr], discNodes, &res);
+        res.cor[*nodeptr] = PRETO;
+        free(nodeptr);
+    }
+
+    free(cor);
+
+    return true;
+}
 
 static void freeAresta(Edge e, void* extra){
     if(e == NULL){
@@ -489,4 +667,203 @@ void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc){
     if (graph->vertices) free(graph->vertices);
     destroiHash(graph->tabelaHash, freeReg, NULL);
     free(graph);
+}
+
+// DIJKSTRA
+/////////////////////////////////////////////////////////////////
+
+typedef struct DijkstraStr{
+    Lista arestas; // Lista de EdgeStr*
+    double distanciaTotal;
+}DijkstraStr;
+
+typedef struct ResourcesDijksta{
+    getNumberValue getNumberFunc;
+    double* distancias;
+    Node* predecessores;
+    bool* processados;
+
+    PriorityQueue pq;
+}ResourcesDijksta;
+
+static bool compInt(void* item1, void* item2){
+    return (*(int*)item1 == *(int*)item2);
+}
+
+static void relaxEdge(Item item, void* extra){
+    EdgeStr* e = (EdgeStr*)item;
+    ResourcesDijksta* res = (ResourcesDijksta*)extra;
+
+    getNumberValue func = res->getNumberFunc;
+
+    Node u = e->from;
+    Node v = e->to;
+    double dist = func(e, NULL);
+
+    if(res->processados[v] == false && res->distancias[v] > res->distancias[u] + dist){
+        res->distancias[v] = res->distancias[u] + dist;
+        res->predecessores[v] = u;
+
+        Node* vp = (Node*)malloc(sizeof(Node));
+        if(checkAllocation(vp, "Ponteiro para Node To.")){
+            destroiPriorityQueue(res->pq, freeReg, NULL);
+            free(res->processados);
+            free(res->distancias);
+            free(res->predecessores);
+        }
+        *vp = v;
+
+        // insere se nao existe, muda a prioridade caso exista.
+        if(changePriorityQueue(res->pq, vp, res->distancias[v], compInt)) free(vp);
+    }
+}
+
+Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getNumberFunc){
+    if(g == NULL){
+        printf("\n - getShortestPath() -> Grafo passado e' nulo. -");
+        return NULL;
+    }
+
+    if(getNumberFunc == NULL){
+        printf("\n - getShortestPath() -> Funcao numerica passada e' nula. -");
+        return NULL;
+    }
+
+    GraphStr* graph = (GraphStr*)g;
+
+    if(from < 0 || from >= graph->nVert || to < 0 || to >= graph->nVert){
+        printf("\n - getShortestPath() -> Algum dos nodes esta' fora dos limites do grafo. -");
+        return NULL;
+    }
+
+    double* distancias = (double*)malloc(sizeof(double) * graph->nVert);
+    if(checkAllocation(distancias, "Vetor das distancias (Dijkstra).")) return NULL;
+    
+    Node* predecessores = (Node*)malloc(sizeof(Node) * graph->nVert);
+    if(checkAllocation(predecessores, "Vetor dos predecessores (Dijkstra).")){
+        free(distancias);
+        return NULL;
+    }
+
+    bool* processados = (bool*)malloc(sizeof(bool) * graph->nVert);
+    if(checkAllocation(processados, "Vetor dos processados (Dijkstra).")){
+        free(predecessores);
+        free(distancias);
+        return NULL;
+    }
+
+    PriorityQueue filaDeProcessamento = criaPriorityQueue(graph->nVert);
+
+    Node* fromP = malloc(sizeof(Node));
+    if(checkAllocation(fromP, "Ponteiro para Node from (Dijkstra).")){
+        free(processados);
+        free(predecessores);
+        free(distancias);
+        return NULL;
+    }
+
+    *fromP = from;
+    inserirPriorityQueue(filaDeProcessamento, fromP, 0.0f);
+
+    for(int i = 0; i < graph->nVert; i++){
+        processados[i] = false;
+        predecessores[i] = -1;
+        distancias[i] = DBL_MAX;
+    }
+
+    distancias[from] = 0;
+
+    ResourcesDijksta res = {
+        getNumberFunc,
+        distancias,
+        predecessores,
+        processados,
+        filaDeProcessamento
+    };
+
+    while(!isPriorityQueueVazia(filaDeProcessamento)){
+        Node* u = removerMinPriorityQueue(filaDeProcessamento);
+        processados[*u] = true;
+
+        if(*u == to){
+            free(u);
+            break;
+        }
+
+        percorrerLista(graph->listaAdj[*u], relaxEdge, &res);
+        free(u);
+    }
+
+    destroiPriorityQueue(filaDeProcessamento, freeReg, NULL);
+
+    // Impossivel de chegar ao destino.
+    if(predecessores[to] == -1){
+        printf("\n - getShortesPath() -> Caminho impossivel de alcancar. -");
+
+        free(distancias);
+        free(predecessores);
+        free(processados);
+        return NULL;
+    }
+
+    // Caminho minimo adiquirido.
+    // Adaptando arrays para retorno.
+
+    DijkstraStr* dStr = (DijkstraStr*)malloc(sizeof(DijkstraStr));
+    if(checkAllocation(dStr, "Dijkstra.")){
+        free(distancias);
+        free(predecessores);
+        free(processados);
+        return NULL;
+    }
+
+    dStr->arestas = criaLista();
+
+    for(int i = to; i != from; i = predecessores[i]){
+        Edge e = getEdge(graph, predecessores[i], i);
+
+        inserirInicio(dStr->arestas, e);
+    }
+
+    dStr->distanciaTotal = distancias[to];
+
+    free(distancias);
+    free(predecessores);
+    free(processados);
+
+    return dStr;
+}
+
+Lista getDijkstraList(Caminho caminho){
+    if(caminho == NULL){
+        printf("\n - getDijkstraList() -> caminho passado e' nulo. -");
+        return NULL;
+    }
+
+    DijkstraStr* djk = (DijkstraStr*)caminho;
+
+    return djk->arestas;
+}
+
+double getDijkstraDistance(Caminho caminho){
+    if(caminho == NULL){
+        printf("\n - getDijkstraDistance() -> caminho passado e' nulo. -");
+        return -1.0f;
+    }
+
+    DijkstraStr* djk = (DijkstraStr*)caminho;
+
+    return djk->distanciaTotal;
+}
+
+void freeCaminho(Caminho caminho, freeFunc freeEdgeFunc){
+    if(caminho == NULL){
+        printf("\n - freeCaminho() -> caminho passado e' nulo. -");
+        return;
+    }
+
+    DijkstraStr* djk = (DijkstraStr*)caminho;
+
+    destroiLista(djk->arestas, freeAresta, freeEdgeFunc);
+    free(caminho);
 }

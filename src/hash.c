@@ -94,7 +94,7 @@ static void checkHashLimit(Hash hash){
 
     // Verifica se o fator de preenchimento foi alcancado.
     if(tabelaHash->qPreenchida >= (int)(tabelaHash->tam * tabelaHash->fPreenchimento)){
-        Hash antigaHash = tabelaHash;
+        //Hash antigaHash = tabelaHash;
         Hash newHash = criaHash(tabelaHash->tam * 2, true, tabelaHash->fPreenchimento);
 
         for(int i = 0; i < tabelaHash->tam; i++){
@@ -177,6 +177,42 @@ HashItem getHashValue(Hash hash, const char* nome){
     for(HashCel* hashCel = tabelaHash->balde[i]; hashCel != NULL; hashCel = hashCel->prox){
         // Compara o nome passado com o nome associado 'as ce'lulas 'a partir do index encontrado.
         if(strcmp(hashCel->chave, nome) == 0) return hashCel->valor;
+    }
+
+    // Caso o nome nao for encontrado, retorna nulo.
+    return NULL;
+}
+
+HashItem removeHashValue(Hash hash, const char* nome){
+    if(hash == NULL){
+        printf("\n - removeHashValue() -> Tabela passada apresenta valor nulo. -");
+        return NULL;
+    }
+
+    if(nome == NULL){
+        printf("\n - removeHashValue() -> Nome especificado apresenta valor nulo. -");
+        return NULL;
+    }
+
+    HashStr* tabelaHash = (HashStr*)hash;
+
+    // Encontra o index associado ao nome na tabela.
+    int i = hashIndex(nome, tabelaHash->tam);
+
+    HashCel* anterior = NULL;
+
+    // Itera sobre as ce'lulas do array balde.
+    for(HashCel* hashCel = tabelaHash->balde[i]; hashCel != NULL; hashCel = hashCel->prox){
+        // Compara o nome passado com o nome associado 'as ce'lulas 'a partir do index encontrado.
+        if(strcmp(hashCel->chave, nome) == 0){
+            HashItem r = hashCel->valor;
+            
+            if(anterior != NULL) anterior->prox = hashCel->prox;
+            else tabelaHash->balde[i] = hashCel->prox;
+
+            return r;
+        }
+        anterior = hashCel;
     }
 
     // Caso o nome nao for encontrado, retorna nulo.

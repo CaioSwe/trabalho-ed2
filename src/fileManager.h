@@ -9,7 +9,23 @@
  */
 typedef void (*freeFunc) (void* item, void* extra);
 
+/**
+ * @brief Funcao de visualizacao de qualquer tipo de informacao.
+ * @return Retorna um ponteiro de caracter (String).
+ */
 typedef char* (*printFunc) (void* item, void* extra);
+
+/**
+ * @brief Compara dois itens e verifica sua igualdade.
+ * @return Retorna um booleano indicando a igualdade dos itens comparados.
+ */
+typedef bool (*compararItens) (void* itemO, void* itemC);
+
+/**
+ * @brief Funcao para adiquirir um valor nume'rico de uma estrutura especifica.
+ * @return Retorna um valor nume'rico (Double).
+ */
+typedef double (*getNumberValue) (void* item, void* extra);
 
 void freeReg(void* item, void* extra);
 

@@ -4,18 +4,27 @@
 #include "lista.h"
 #include "streap.h"
 #include "digraph.h"
+#include "geo.h"
 
 /*
     TERMINAR A IMPLEMENTACAO DA STREAP PARA TESTE FINAL.
     TERMINAR IMPLEMENTACAO DO removerQuadras E desbloquearSentido.
 */
 
+typedef void* Percurso;
+
 /**
- * @brief Processa o arquivo .qry passado como parâmetro e insere as formas adquiridas em uma lista de retorno com formas do tipo Quadra.
+ * @brief Processa o arquivo .qry.
  * 
+ * @param grafo Grafo da via.
+ * @param quadras Quadras da cidade.
  * @param path String de caminho do arquivo .qry.
- * @return Retorna uma lista com as formas do .qry.
+ * @return O caminho da origem ate' o destino do .qry. Caso o caminho nao exista, retorna nulo.
  */
-Lista processQryFile(Graph grafo, Quadras quadras, STreap arvore, const char* path);
+Percurso processQryFile(Graph grafo, Quadras quadras, const char* path);
+
+Caminho getCaminhoCurto(Percurso percurso);
+
+Caminho getCaminhoRapido(Percurso percurso);
 
 #endif

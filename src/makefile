@@ -4,7 +4,7 @@ CC = gcc
 CFLAGS = -g -O0 -std=c99 -fstack-protector-all -Werror=implicit-function-declaration -Wall
 LDFLAGS = 
 LIBS = -lm -lssp
-SRCS = main.c lista.c fileManager.c geo.c files.c digraph.c hash.c via.c
+SRCS = main.c lista.c fileManager.c geo.c files.c digraph.c hash.c via.c priorityQueue.c streap.c qry.c
 
 OBJETOS = $(SRCS:.c=.o)
 
@@ -21,6 +21,9 @@ files.o: files.c files.h
 digraph.o: digraph.c digraph.h
 hash.o: hash.c hash.h
 via.o: via.c via.h
+priorityQueue.o: priorityQueue.c priorityQueue.h
+streap.o: streap.c streap.h
+qry.o: qry.c qry.h
 
 main.o: main.c lista.h fileManager.h geo.h files.h digraph.h via.h
 
