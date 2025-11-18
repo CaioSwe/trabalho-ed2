@@ -6,7 +6,10 @@
 #include "geo.h"
 #include "via.h"
 
-// MUDAR TAMANHO DA TABELA HASH DOS COMANDOS DE BLOQUEIO PARA ADAPTABILIDADE.
+typedef struct Coords{
+    double x;
+    double y;
+}Coords;
 
 // Estrutura de ponto da cidade que contem No', face e numero.
 typedef struct Ponto{
@@ -58,28 +61,28 @@ static void verificarSentidoBlock(Item item, void* extra){
 
     Info edgeInfo = getEdgeInfo(res->graph, e);
 
-    if(strcmp(res->sentido, "ns") == 0){
+    if(strcmp(res->sentido, "sn") == 0){
         double y1 = getVerticeViaY(infoFrom);
         double y2 = getVerticeViaY(infoTo);
 
         if(y1 < y2) blockVia(edgeInfo);
         inserirFim(res->lista, e);
     }
-    else if(strcmp(res->sentido, "sn") == 0){
+    else if(strcmp(res->sentido, "ns") == 0){
         double y1 = getVerticeViaY(infoFrom);
         double y2 = getVerticeViaY(infoTo);
 
         if(y1 > y2) blockVia(edgeInfo);
         inserirFim(res->lista, e);
     }
-    else if(strcmp(res->sentido, "lo") == 0){
+    else if(strcmp(res->sentido, "ol") == 0){
         double x1 = getVerticeViaX(infoFrom);
         double x2 = getVerticeViaX(infoTo);
 
         if(x1 > x2) blockVia(edgeInfo);
         inserirFim(res->lista, e);
     }
-    else if(strcmp(res->sentido, "ol") == 0){
+    else if(strcmp(res->sentido, "lo") == 0){
         double x1 = getVerticeViaX(infoFrom);
         double x2 = getVerticeViaX(infoTo);
 
@@ -126,7 +129,7 @@ static void removerQuadraLista(Item item, void* extra){
     Quadra q = (Quadra)item;
     // Quadras qs = (Quadras)extra;
 
-    printf("\nQ = (%s)", getQuadraID(q));
+    //printf("\nQ = (%s)", getQuadraID(q));
     setQuadraCFill(q, "#660080");
 
     //removerQuadra(qs, q);
@@ -172,6 +175,63 @@ static void insertSTrpGraphVoid(Item item, void* extra){
     }
 
     insertSTrp(res->grafoStrp, x, y, nodep);
+}
+
+Coords calculateCoordsByQuadraFaceNum(Quadra quadra, char face, int num){
+    double quadraX = getQuadraX(quadra);
+    double quadraY = getQuadraY(quadra);
+    double quadraWidth = getQuadraWidth(quadra);
+    double quadraHeight = getQuadraHeight(quadra);
+
+    double pontoX = 0;
+    double pontoY = 0;
+
+    switch (face){
+    case 'S':
+        if(num > quadraWidth){
+            printf("\n getCoordsByQuadraFaceNum() -> Numero da quadra invalido.");
+            return (Coords){0, 0};
+        }
+
+        pontoX = quadraX + num;
+        pontoY = quadraY;
+
+        break;
+    case 'N':
+        if(num > quadraWidth){
+            printf("\n getCoordsByQuadraFaceNum() -> Numero da quadra invalido.");
+            return (Coords){0, 0};
+        }
+
+        pontoY = quadraY + quadraHeight;
+        pontoX = quadraX + num;
+
+        break;
+    case 'L':
+        if(num > quadraHeight){
+            printf("\n getCoordsByQuadraFaceNum() -> Numero da quadra invalido.");
+            return (Coords){0, 0};
+        }
+
+        pontoY = quadraY + num;
+
+        break;
+    case 'O':
+        if(num > quadraHeight){
+            printf("\n getCoordsByQuadraFaceNum() -> Numero da quadra invalido.");
+            return (Coords){0, 0};
+        }
+
+        pontoX = quadraX + quadraWidth;
+        pontoY = quadraY + num;
+
+        break;
+    default:
+        printf("\n getCoordsByQuadraFaceNum() -> Face invalida.");
+        return (Coords){0, 0};
+    }
+
+    return (Coords){pontoX, pontoY};
 }
 
 Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
@@ -245,10 +305,6 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             // Pega [cep, face, num] da operacao de origem.
             fscanf(fEntrada, "%s %c %d\n", cep, &face, &num);
 
-            // Pega o node com o cep registrado no grafo.
-            // Node node = getNode(grafo, cep);
-            printf("\n a");
-
             percurso->origem = (Ponto*)malloc(sizeof(Ponto));
             if(checkAllocation(percurso->origem, "Ponto de origem do percurso.")){
                 destroiHash(tabelaHash, freeBloqueio, NULL);
@@ -256,9 +312,16 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
                 return NULL;
             }
 
+            // Quadra quadra = getQuadraByID(quadras, cep);
+            // Coords coord = calculateCoordsByQuadraFaceNum(quadra, face, num);
+            
+            // NodeST node = getClosestNodeSTrp(grafoSTreap, coord.x, coord.y);
+            // Info infoNode = getInfoSTrp(grafoSTreap, node, NULL, NULL, NULL, NULL, NULL, NULL);
+            
+            // Node node =  *(int*)infoNode;
+
             // Registra as informacoes do node encontrado na origem do percurso.
-            //percurso->origem->node = node;
-            percurso->origem->node = 250;
+            percurso->origem->node = 50;
             percurso->origem->face = face;
             percurso->origem->num = num;
         }
@@ -269,9 +332,34 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             Lista lista = criaLista();
 
             // Pega a lista das quadras dentro da regiao [x, y, w, h].
-            getQuadrasRegion(quadras, x, y, w, h, lista);
+            STreap quadrasStrp = getQuadrasSTrp(quadras);
+            double bx1, bx2, by1, by2;
+            getInfoSTrp(quadrasStrp, getStrpRoot(quadrasStrp), NULL, NULL, &bx1, &by1, &bx2, &by2);
+
+            printf("\n Bounding box da raiz = %.1f %.1f %.1f %.1f", bx1, bx2, by1, by2);
+
+            printSTrp(quadrasStrp, "./QuadrasStrp.dot");
+            system("dot -Tpng QuadrasStrp.dot -o QuadrasStrp.png");
+
+            getQuadrasRegion(quadras, bx1, by1, bx2-bx1-100, by2-by1, lista);
             // Percorre a lista das quadras dentro da regiao, excluindo-as.
             percorrerLista(lista, removerQuadraLista, quadras);
+
+            double averageheight = 0;
+            int nItems = 0;
+
+            STreap sample = NULL;
+
+            for(int i = 0; i < 100; i++){
+                sample = createSTrp(0.00001);
+                percorrerLista(nomesGrafo, insertSTrpGraphVoid, &(ResourcesInsertSTrpGraphVoid){sample, grafo});
+                nItems += 1;
+                int altura = getAlturaStrp(sample);
+                averageheight += altura;
+                printf("\n Altura [%d] = %d", i + 1, altura);
+            }
+
+            printf("\n Criada %d Strps, com me'dia de altura de %.1f (%d Itens inseridos).", nItems, (double)(averageheight / nItems), getTotalNodes(grafo));
 
             limparLista(lista, NULL, NULL);
         }
@@ -363,9 +451,16 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
                 return NULL;
             }
 
-            // Associa todos os valores passados ao destino.
-            // percurso->destino->node = getNode(grafo, cep);
-            percurso->destino->node = 50;
+            // Quadra quadra = getQuadraByID(quadras, cep);
+            // Coords coord = calculateCoordsByQuadraFaceNum(quadra, face, num);
+            
+            // NodeST node = getClosestNodeSTrp(grafoSTreap, coord.x, coord.y);
+            // Info infoNode = getInfoSTrp(grafoSTreap, node, NULL, NULL, NULL, NULL, NULL, NULL);
+            
+            // Node node =  *(int*)infoNode;
+
+            // Registra as informacoes do node encontrado no destino do percurso.
+            percurso->destino->node = 250;
             percurso->destino->face = face;
             percurso->destino->num = num;
 

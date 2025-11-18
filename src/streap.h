@@ -71,6 +71,11 @@ Info getInfoSTrp(STreap t, NodeST n, double *x, double *y, double *mbbX1, double
 NodeST getNodeSTrp(STreap t, double xa, double ya);
 
 /*
+  Retorna o no da arvore associado a ancora (xa,ya) mais pro'xima e o retangulo envolvente; NULL, se tal ancora nao existir.
+*/
+NodeST getClosestNodeSTrp(STreap t, double xa, double ya);
+
+/*
   Altera a informacao associada ao no n que deve ser existente e valido. 
   A ancora  deste no nao sao alterado.
 */
@@ -120,5 +125,11 @@ void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux);
   Desaloca todos os recursos usados pela arvore t.
 */
 void killSTrp(STreap t, freeFunc fFunc, void* extra);
+
+///////////////////////
+
+NodeST getStrpRoot(STreap t);
+
+int getAlturaStrp(STreap t);
 
 #endif

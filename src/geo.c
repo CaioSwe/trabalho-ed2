@@ -256,3 +256,9 @@ void freeQuadras(Quadras quadras, void* extra){
     destroiHash(qs->tabelaHash, NULL, NULL);
     free(qs);
 }
+
+///////////////////////////
+
+STreap getQuadrasSTrp(Quadras quadras){
+    return ((QuadrasStr*)quadras)->streap;
+}

@@ -85,4 +85,8 @@ void removerQuadra(Quadras quadras, Quadra quadra);
 // Funcao de liberacao de memoria das quadras.
 void freeQuadras(Quadras quadras, void* extra);
 
+/////////////////////////////////
+
+STreap getQuadrasSTrp(Quadras quadras);
+
 #endif

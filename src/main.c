@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "lista.h"
 #include "files.h"
@@ -49,6 +50,9 @@ void printEdgeToSVGvoid(Item item, void* extra){
 }
 
 int main(int argc, char* argv[]){
+    // Geracao de prioridade aleatoria.
+    srand((unsigned)time(NULL));
+
     char* flags[5] = {"-e", "-o", "-f", "-q", "-v"};
     char** paths = calloc(5, sizeof(char*));
 

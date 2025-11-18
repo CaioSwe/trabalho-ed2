@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 
 #include <time.h>
 
-// #include <graphviz/gvc.h>
-// #include <graphviz/cgraph.h>
+#include <graphviz/gvc.h>
+#include <graphviz/cgraph.h>
 
 /*
     TERMINAR
@@ -55,9 +56,6 @@ STreap createSTrp(double epsilon){
     st->epsilon = epsilon;
 
     st->fFunc = NULL;
-
-    // Geracao de prioridade aleatoria.
-    srand((unsigned)time(NULL));
 
     return (STreap)st;
 }
@@ -150,7 +148,7 @@ static void rotateRightSTrp(STreap t, NodeST node){
     }
 
     updateBoundingBox(p);
-    updateBoundingBoxUp(q);
+    updateBoundingBox(q);
 }
 
 static void rotateLeftSTrp(STreap t, NodeST node){
@@ -183,7 +181,7 @@ static void rotateLeftSTrp(STreap t, NodeST node){
     }
 
     updateBoundingBox(p);
-    updateBoundingBoxUp(q);
+    updateBoundingBox(q);
 }
 
 static NodeST insertNodeByKeySTrp(STreap t, double x, double y, Info info){
@@ -196,8 +194,6 @@ static NodeST insertNodeByKeySTrp(STreap t, double x, double y, Info info){
 
     NodeStr* newNode = createNodeSTrp(x, y, info);
     if(newNode == NULL) return NULL;
-
-    updateBoundingBoxUp(newNode);
 
     if(st->raiz == NULL){
         st->raiz = newNode;
@@ -236,6 +232,9 @@ static NodeST insertNodeByKeySTrp(STreap t, double x, double y, Info info){
         }
     }
 
+    updateBoundingBox(newNode);
+    updateBoundingBoxUp(newNode);
+
     return newNode;
 }
 
@@ -263,12 +262,13 @@ NodeST insertSTrp(STreap t, double x, double y, Info info){
         return NULL;
     }
 
+    STreapStr* st = (STreapStr*)t;
+
     NodeStr* newNode = insertNodeByKeySTrp(t, x, y, info);
     if(newNode == NULL) return NULL;
 
     rebalancearSTrp(t, newNode);
-
-    updateBoundingBoxUp(newNode);
+    st->nRoot += 1;
 
     return newNode;
 }
@@ -353,6 +353,78 @@ NodeST getNodeSTrp(STreap t, double xa, double ya){
     return getNodeSTrpRec(tr->raiz, xa, ya, tr->epsilon);
 }
 
+// typedef struct ResourcesClosestNode{
+//     NodeStr* closest;
+//     double bestDistance;
+//     double x;
+//     double y;
+// }ResourcesClosestNode;
+
+// static double distance(double x1, double y1, double x2, double y2){
+//     double dx = x1 - x2;
+//     double dy = y1 - y2;
+
+//     return dx*dx + dy*dy;
+// }
+
+// static NodeStr* getClosestNodeBoundingBoxFunc(NodeStr* node, BoundingBox rec){
+//     if(node == NULL) return NULL;
+
+//     NodeStr* best = NULL;
+//     double bestArea = DBL_MAX;
+
+//     if(checkInsideBoxes(*node->box, rec)){
+//         best = node;
+//         bestArea = getBoxArea(*node->box);
+//     }
+
+//     if(node->esq){
+//         NodeStr* left = getClosestNodeBoundingBoxFunc(node->esq, rec);
+//         if(left){
+//             double a = getBoxArea(*left->box);
+//             if(a < bestArea){
+//                 best = left;
+//                 bestArea = a;
+//             }
+//         }
+//     }
+
+//     if(node->dir){
+//         NodeStr* right = getClosestNodeBoundingBoxFunc(node->dir, rec);
+//         if(right){
+//             double a = getBoxArea(*right->box);
+//             if(a < bestArea){
+//                 best = right;
+//                 bestArea = a;
+//             }
+//         }
+//     }
+
+//     return best;
+// }
+
+// NodeST getClosestNodeSTrp(STreap t, double xa, double ya){
+//     STreapStr* tr = (STreapStr*)t;
+    
+//     if(tr == NULL) return NULL;
+
+//     Lista resultado = criaLista();
+//     NodeStr* closestBoundingBoxNode = getClosestNodeBoundingBoxFunc(tr->raiz, (BoundingBox){xa, ya, xa, ya});
+
+//     NodeStr* closest = NULL;
+
+//     ResourcesClosestNode res = {
+//         closest,
+//         DBL_MAX,
+//         xa,
+//         ya,
+//     };
+    
+//     percorrerLista(resultado, NULL, &res);
+
+//     return res.closest;
+// }
+
 void updateInfoSTrp(STreap t, NodeST n, Info i){
     ((NodeStr*)n)->info = i;
 }
@@ -407,7 +479,29 @@ Info removeSTrp(STreap t, double xa, double ya){
     return deleteNodeSTrp(t, node);
 }
 
-void printSTrp(STreap t, char *nomeArq);
+static void exportDot(NodeStr* node, FILE* f){
+    if(!node) return;
+
+    if(node->esq){
+        fprintf(f, "\"(%d)\" -> \"(%d)\";\n", node->prioridade, node->esq->prioridade);
+        exportDot(node->esq, f);
+    }
+    if(node->dir){
+        fprintf(f, "\"(%d)\" -> \"(%d)\";\n", node->prioridade, node->dir->prioridade);
+        exportDot(node->dir, f);
+    }
+}
+
+void printSTrp(STreap t, char *nomeArq){
+    STreapStr* tr = (STreapStr*)t;
+    FILE *f = fopen(nomeArq, "w");
+
+    fprintf(f, "digraph STreap{\n");
+    exportDot(tr->raiz, f);
+    fprintf(f, "}\n");
+
+    fclose(f);
+}
 
 void percursoLargura(STreap t, FvisitaNo fVisita, void *aux){
     if(t == NULL){
@@ -524,4 +618,23 @@ void killSTrp(STreap t, freeFunc fFunc, void* extra){
 
     killSTrpRec(tr->raiz, fFunc, extra);
     free(tr);
+}
+
+////////////////////////
+
+NodeST getStrpRoot(STreap t){
+    return ((STreapStr*)t)->raiz;
+}
+
+static int alturaSTrp(NodeStr* node){
+    if(node == NULL) return 0;
+    
+    int altEsq = alturaSTrp(node->esq);
+    int altDir = alturaSTrp(node->dir);
+
+    return ((altDir > altEsq) ? altDir : altEsq) + 1;
+}
+
+int getAlturaStrp(STreap t){
+    return alturaSTrp(((STreapStr*)t)->raiz);
 }
