@@ -66,7 +66,7 @@ const char* getQuadraSW(Quadra quadra);
 // Retorna a quadra associada ao id fornecido.
 Quadra getQuadraByID(Quadras quadras, const char* id);
 
-// Insere as quadras que estao dentro da regiao na lista passada.
+// Insere as quadras que estao totalmente dentro da regiao e insere na lista passada.
 void getQuadrasRegion(Quadras quadras, double x, double y, double w, double h, Lista resultado);
 
 // FUNÇÕES SET
@@ -88,5 +88,11 @@ void freeQuadras(Quadras quadras, void* extra);
 /////////////////////////////////
 
 STreap getQuadrasSTrp(Quadras quadras);
+
+// Checa se todos os pontos (2) estao completamente dentro de (1).
+bool isInside(double x1, double y1, double w1, double h1, double x2, double y2, double w2, double h2);
+
+// Checa se os pontos (2) estao completamente fora de (1).
+bool isOutside(double x1, double y1, double w1, double h1, double x2, double y2, double w2, double h2);
 
 #endif

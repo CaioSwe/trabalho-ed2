@@ -17,11 +17,10 @@ typedef struct QuadraStr{
 } QuadraStr;
 
 typedef struct QuadrasStr{
-    int maxQuadras;
     int nQuadras;
 
     Hash tabelaHash;
-    STreap streap;
+    STreap streap; // STreap Info = QuadraStr
 } QuadrasStr;
 
 // Declaracao de escopo de funcoes.
@@ -43,7 +42,6 @@ Quadras processGeoFile(const char* path){
     if(checkAllocation(quadras, "Quadras.")) return NULL;
 
     quadras->nQuadras = 0;
-    quadras->maxQuadras = 50;
     quadras->tabelaHash = criaHash(50, true, 0.75f);
 
     quadras->streap = createSTrp(0.0000001f);
@@ -185,15 +183,24 @@ Quadra getQuadraByID(Quadras quadras, const char* id){
     return getHashValue(qs->tabelaHash, id);
 }
 
-static Item convertNodeToQuadra(Item item){
-    return getInfoSTrp(NULL, item, NULL, NULL, NULL, NULL, NULL, NULL);
+typedef struct ResourcesQuadraRegion{
+    double x, y, w, h;
+}ResourcesQuadraRegion;
+
+static Item convertNodeToQuadra(Item item, void* extra){
+    QuadraStr* quadra = getInfoSTrp(NULL, item, NULL, NULL, NULL, NULL, NULL, NULL);
+    ResourcesQuadraRegion* res = (ResourcesQuadraRegion*)extra;
+
+    bool inside = isInside(res->x, res->y, res->w, res->h, quadra->x, quadra->y, quadra->width, quadra->height);
+
+    return (inside ? quadra : NULL);
 }
 
 void getQuadrasRegion(Quadras quadras, double x, double y, double w, double h, Lista resultado){
     Lista nodeSTs = criaLista();
     getNodeRegiaoSTrp(((QuadrasStr*)quadras)->streap, x, y, w, h, nodeSTs);
 
-    mapTo(nodeSTs, resultado, convertNodeToQuadra, sizeof(QuadraStr));
+    mapTo(nodeSTs, resultado, convertNodeToQuadra, sizeof(QuadraStr), &(ResourcesQuadraRegion){x, y, w, h});
 }
 
 // FUNCOES SET
@@ -261,4 +268,12 @@ void freeQuadras(Quadras quadras, void* extra){
 
 STreap getQuadrasSTrp(Quadras quadras){
     return ((QuadrasStr*)quadras)->streap;
+}
+
+bool isInside(double x1, double y1, double w1, double h1, double x2, double y2, double w2, double h2){
+    return (x2 >= x1 && (x2 + w2) <= (x1 + w1) && y2 >= y1 && (y2 + h2) <= (y1 + h1));
+}
+
+bool isOutside(double x1, double y1, double w1, double h1, double x2, double y2, double w2, double h2){
+    return (x2 + w2 < x1 || x2 > x1 + w1 || y2 + h2 < y1 || y2 > y1 + h1);
 }

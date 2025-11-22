@@ -127,12 +127,42 @@ static void desbloquearSentido(Item item, void* extra){
 
 static void removerQuadraLista(Item item, void* extra){
     Quadra q = (Quadra)item;
-    // Quadras qs = (Quadras)extra;
+    Quadras qs = (Quadras)extra;
 
-    //printf("\nQ = (%s)", getQuadraID(q));
-    setQuadraCFill(q, "#660080");
+    removerQuadra(qs, q);
+}
 
-    //removerQuadra(qs, q);
+static void removerArestaVoid(Item item, void* extra){
+    Edge e = (Edge)item;
+    Graph g = (Graph)extra;
+    removeEdge(g, e, freeArestaVia);
+}
+
+typedef struct ResourcesEdgeRem{
+    Graph grafo;
+    STreap streap;
+}ResourcesEdgeRem;
+
+static void removerArestasListaeSTreap(Item item, void* extra){
+    NodeST nodeSt = (NodeST)item;
+    ResourcesEdgeRem* res = (ResourcesEdgeRem*)extra;
+
+    Info nodeInfo = deleteNodeSTrp(res->streap, nodeSt);
+    Node* nodeG = (Node*)nodeInfo;
+    
+    Lista arestasFrom = criaLista();
+    Lista arestasTo = criaLista();
+
+    adjacentEdges(res->grafo, *nodeG, arestasFrom);
+    adjacentEdgesReverse(res->grafo, *nodeG, arestasTo);
+    
+    free(nodeG);
+
+    percorrerLista(arestasFrom, removerArestaVoid, res->grafo);
+    percorrerLista(arestasTo, removerArestaVoid, res->grafo);
+
+    limparLista(arestasFrom, NULL, NULL);
+    limparLista(arestasTo, NULL, NULL);
 }
 
 // Aumenta a velocidade media das arestas passadas.
@@ -173,6 +203,8 @@ static void insertSTrpGraphVoid(Item item, void* extra){
         killSTrp(res->grafoStrp, NULL, NULL);
         return;
     }
+
+    *nodep = node;
 
     insertSTrp(res->grafoStrp, x, y, nodep);
 }
@@ -281,6 +313,7 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
     // Insere todos os nomes dos nodes do grafo na STreap.
     Lista nomesGrafo = criaLista();
     getNodeNames(grafo, nomesGrafo);
+    
     percorrerLista(nomesGrafo, insertSTrpGraphVoid, &(ResourcesInsertSTrpGraphVoid){grafoSTreap, grafo});
 
     // Cria e inicializa a estrutura de percurso.
@@ -318,10 +351,10 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             // NodeST node = getClosestNodeSTrp(grafoSTreap, coord.x, coord.y);
             // Info infoNode = getInfoSTrp(grafoSTreap, node, NULL, NULL, NULL, NULL, NULL, NULL);
             
-            // Node node =  *(int*)infoNode;
+            Node closestNode = 163;
 
             // Registra as informacoes do node encontrado na origem do percurso.
-            percurso->origem->node = 50;
+            percurso->origem->node = closestNode;
             percurso->origem->face = face;
             percurso->origem->num = num;
         }
@@ -332,34 +365,14 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             Lista lista = criaLista();
 
             // Pega a lista das quadras dentro da regiao [x, y, w, h].
-            STreap quadrasStrp = getQuadrasSTrp(quadras);
-            double bx1, bx2, by1, by2;
-            getInfoSTrp(quadrasStrp, getStrpRoot(quadrasStrp), NULL, NULL, &bx1, &by1, &bx2, &by2);
-
-            printf("\n Bounding box da raiz = %.1f %.1f %.1f %.1f", bx1, bx2, by1, by2);
-
-            printSTrp(quadrasStrp, "./QuadrasStrp.dot");
-            system("dot -Tpng QuadrasStrp.dot -o QuadrasStrp.png");
-
-            getQuadrasRegion(quadras, bx1, by1, bx2-bx1-100, by2-by1, lista);
-            // Percorre a lista das quadras dentro da regiao, excluindo-as.
+            getQuadrasRegion(quadras, x, y, w, h, lista);
             percorrerLista(lista, removerQuadraLista, quadras);
 
-            double averageheight = 0;
-            int nItems = 0;
+            limparLista(lista, NULL, NULL);
 
-            STreap sample = NULL;
-
-            for(int i = 0; i < 100; i++){
-                sample = createSTrp(0.00001);
-                percorrerLista(nomesGrafo, insertSTrpGraphVoid, &(ResourcesInsertSTrpGraphVoid){sample, grafo});
-                nItems += 1;
-                int altura = getAlturaStrp(sample);
-                averageheight += altura;
-                printf("\n Altura [%d] = %d", i + 1, altura);
-            }
-
-            printf("\n Criada %d Strps, com me'dia de altura de %.1f (%d Itens inseridos).", nItems, (double)(averageheight / nItems), getTotalNodes(grafo));
+            // Pega a lista dos vertices dentro da regiao [x, y, w, h].
+            getNodeRegiaoSTrp(grafoSTreap, x, y, w, h, lista);
+            percorrerLista(lista, removerArestasListaeSTreap, &(ResourcesEdgeRem){grafo, grafoSTreap});
 
             limparLista(lista, NULL, NULL);
         }
@@ -470,11 +483,11 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
             // Calcula o caminho mais curto e o caminho mais ra'pido com Dijkstra (implementacao no final de digraph.c).
             percurso->caminhoCurto = getShortestPath(grafo, percurso->origem->node, percurso->destino->node, getArestaCMPVoid);
             percurso->caminhoRapido = getShortestPath(grafo, percurso->origem->node, percurso->destino->node, getArestaVMVoid);
-        
+
             // Caso algum dos caminhos for nulo, aborta o retorno do percurso.
             if(percurso->caminhoCurto == NULL || percurso->caminhoRapido == NULL){
-                if(percurso->caminhoCurto != NULL) freeCaminho(percurso->caminhoCurto, freeArestaVia);
-                if(percurso->caminhoRapido != NULL) freeCaminho(percurso->caminhoRapido, freeArestaVia);
+                if(percurso->caminhoCurto != NULL) freeCaminho(percurso->caminhoCurto);
+                if(percurso->caminhoRapido != NULL) freeCaminho(percurso->caminhoRapido);
 
                 free(percurso->origem);
                 free(percurso->destino);
@@ -490,6 +503,9 @@ Percurso processQryFile(Graph grafo, Quadras quadras, const char* path){
 
     // Fecha o arquivo de entrada
     fclose(fEntrada);
+
+    killSTrp(grafoSTreap, freeReg, NULL);
+    destroiHash(tabelaHash, freeBloqueio, NULL);
 
     return percurso;
 }
@@ -512,4 +528,17 @@ const char* getPercursoRapidoColor(Percurso percurso){
 const char* getPercursoCurtoColor(Percurso percurso){
     PercursoStr* p = (PercursoStr*)percurso;
     return p->cmc;
+}
+
+void freePercurso(Percurso percurso, freeFunc freeCaminhoFunc, void* extra){
+    PercursoStr* p = (PercursoStr*)percurso;
+    
+    if(freeCaminhoFunc != NULL){
+        freeCaminhoFunc(p->caminhoCurto, extra);
+        freeCaminhoFunc(p->caminhoRapido, extra);
+    }
+
+    free(p->origem);
+    free(p->destino);
+    free(p);
 }

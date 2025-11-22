@@ -150,7 +150,7 @@ Item remover(Lista lista, compararItens compFunc, Item item){
 
     Celula* cel = l->inicio;
 
-    if (cel == NULL) return NULL;
+    if(cel == NULL) return NULL;
 
     if(compFunc(cel->item, item)){
         l->inicio = cel->prox;
@@ -184,7 +184,7 @@ Item remover(Lista lista, compararItens compFunc, Item item){
         }
         cel = cel->prox;
     }
-
+    
     return NULL;
 }
 
@@ -206,7 +206,7 @@ int listaTamanho(Lista lista){
     return ((listaStr*)lista)->tamanho;
 }
 
-void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize){
+void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize, void* extra){
     if(from == NULL || to == NULL){
         printf("\n - mapTo() -> Lista passada e' nula.");
         return;
@@ -225,10 +225,10 @@ void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize){
     Celula* cel = listaFrom->inicio;
     
     while(cel != NULL){
-        Item item = mapFunc(cel->item);
+        Item item = mapFunc(cel->item, extra);
         if(item == NULL){
-            printf("\n - mapTo() -> Item de mapeamento nulo.");
-            return;
+            cel = cel->prox;
+            continue;
         }
 
         Item newItem = malloc(itemSize);

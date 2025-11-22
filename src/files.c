@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "geo.h"
 #include "files.h"
@@ -36,11 +37,6 @@ void printEdgeToSVG(Graph g, Edge e, FILE* file, const char* color){
 
     fprintf(file, "<line x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\" style=\"stroke:%s;stroke-width:4\"/>\n", x1, y1, x2, y2, color);
 }
-
-// typedef struct teste{
-//     Graph g;
-//     FILE* file;
-// }teste;
 
 // void printToTXT(Item item, void* extra){
 //     teste* t = (teste*)extra;

@@ -133,6 +133,12 @@ void adjacentNodes(Graph g, Node node, Lista nosAdjacentes);
 void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes);
 
 /*
+    Adiciona 'a lista "arestaAdjacentes" as arestas (x,y), tal que,
+    y == node.
+*/
+void adjacentEdgesReverse(Graph g, Node node, Lista arestasAdjacentes);
+
+/*
     Insere na lista "nomesNodes" os nomes atribuidos aos no's do grafo.
 */
 void getNodeNames(Graph g, Lista nomesNodes);
@@ -203,6 +209,6 @@ void killDG(Graph g, freeFunc freeVerticeFunc, freeFunc freeEdgeFunc);
 /*
     Funcao de liberacao do caminho.
 */
-void freeCaminho(Caminho caminho, freeFunc freeEdgeFunc);
+void freeCaminho(Caminho caminho);
 
 #endif

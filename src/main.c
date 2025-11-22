@@ -49,6 +49,53 @@ void printEdgeToSVGvoid(Item item, void* extra){
     printEdgeToSVG(res->g, item, res->file, res->color);
 }
 
+void freeCaminhoVoid(Item item, void* extra){
+    freeCaminho(item);
+}
+
+typedef struct ResourcesAnimation{
+    Graph grafo;
+    FILE* file;
+    double* vm;
+}ResourcesAnimation;
+
+void animateEdgeSVG(Item item, void* extra){
+    Edge e = (Edge)item;
+    ResourcesAnimation* res = (ResourcesAnimation*)extra;
+
+    Node f = getFromNode(NULL, e);
+    Node t = getToNode(NULL, e);
+
+    Info infoF = getNodeInfo(res->grafo, f);
+    Info infoT = getNodeInfo(res->grafo, t);
+
+    double x1 = getVerticeViaX(infoF);
+    double y1 = getVerticeViaY(infoF);
+
+    double x2 = getVerticeViaX(infoT);
+    double y2 = getVerticeViaY(infoT);
+
+    double vm = getArestaVM(getEdgeInfo(res->grafo, e));
+
+    *res->vm += vm;
+
+    fprintf(res->file, " %.1f,%.1f", x1, y1);
+    fprintf(res->file, " %.1f,%.1f", x2, y2);
+}
+
+void animatePercurso(Graph grafo, Lista listaEdges, const char* color, FILE* file){
+    static int pathID = 0;
+    double vm = 0;
+
+    fprintf(file, "\n<path id=\"path%d\" d=\"M", pathID);
+    percorrerLista(listaEdges, animateEdgeSVG, &(ResourcesAnimation){grafo, file, &vm});
+
+    fprintf(file, "\" fill=\"none\" stroke=\"%s\" stroke-width=\"2\"/>", color);
+    fprintf(file, "\n<circle r=\"10\" fill=\"%s\"><animateMotion dur=\"%.1fs\" repeatCount=\"indefinite\" rotate=\"auto\"><mpath href=\"#path%d\"/></animateMotion></circle>\n", color, vm, pathID);
+
+    pathID += 1;
+}
+
 int main(int argc, char* argv[]){
     // Geracao de prioridade aleatoria.
     srand((unsigned)time(NULL));
@@ -191,9 +238,8 @@ int main(int argc, char* argv[]){
         // Tire de comenta'rio caso queria visualizar os vertices do grafo no SVG produzido pelo arquivo .via
         /////////////////////////////////////////
 
-        // teste1 t = {fSaida, grafo, 1};
-        // percorrerLista(arestas, printEdgesToSVG, &t);
-        // percorrerLista(vertices, printVerticesToSVG, fSaida);
+        // percorrerLista(arestas, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, "#ff2222ff"});
+        // percorrerLista(vertices, printVerticeToSVG, fSaida);
 
         /////////////////////////////////////////
 
@@ -212,6 +258,15 @@ int main(int argc, char* argv[]){
 
         Percurso percurso = processQryFile(grafo, formas, fEntradaPathQry);
 
+        if(percurso == NULL){
+            freePercurso(percurso, freeCaminhoVoid, NULL);
+            freeQuadras(formas, NULL);
+            for(int i = 1; i < 5; i++) free(paths[i]);
+            free(paths);
+            printf("\nPrograma finalizado com sucesso!\n");
+            return 0;
+        }
+
         Caminho rapido = getCaminhoCurto(percurso);
         Caminho curto = getCaminhoRapido(percurso);
         
@@ -222,7 +277,7 @@ int main(int argc, char* argv[]){
         /////////////////////////////////////////
 
         // Concatena o diretório de saída com o nome do arquivo .geo + .qry em formato .svg
-        const char* fOutputPathQry = strcatcat(changeExtension(fOutputPath, ""), changeExtension(paths[QUERY], ".svg"));
+        const char* fOutputPathQry = strcatcat(changeExtension(fOutputPath, "-"), changeExtension(paths[QUERY], ".svg"));
         
         // Abre o diretório em modo de escrita
         fSaida = fopen(fOutputPathQry, "w");
@@ -231,8 +286,21 @@ int main(int argc, char* argv[]){
         fprintf(fSaida, "<svg viewBox=\"-39.0 -39.0 %.1f %.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX * 1.2f, maxY * 1.2f);
         percorrerQuadras(formas, printQuadraToSVGvoid, fSaida);
 
-        percorrerLista(listaRapido, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, getPercursoRapidoColor(percurso)});
-        percorrerLista(listaCurto, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, getPercursoCurtoColor(percurso)});
+        Lista arestas2 = criaLista();
+        getEdges(grafo, arestas2);
+
+        // Printar todas as arestas
+        // percorrerLista(arestas2, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, "#ff2222ff"});
+
+        // Printar o caminho rapido
+        // percorrerLista(listaRapido, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, getPercursoRapidoColor(percurso)});
+        animatePercurso(grafo, listaRapido, getPercursoRapidoColor(percurso), fSaida);
+
+        // Printar o caminho curto;
+        // percorrerLista(listaCurto, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, getPercursoCurtoColor(percurso)});
+        animatePercurso(grafo, listaCurto, getPercursoCurtoColor(percurso), fSaida);
+
+        freePercurso(percurso, freeCaminhoVoid, NULL);
 
         fprintf(fSaida, "</svg>");
         fclose(fSaida);

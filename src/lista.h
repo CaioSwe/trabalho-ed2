@@ -21,7 +21,7 @@ typedef void* Item;
  * @brief Função de mapeamento que recebe um item e aplica uma operação sob ele.
  * @return Retorna o ponteiro para o item modificado.
  */
-typedef Item (*mapFunction)(Item item);
+typedef Item (*mapFunction)(Item item, void* extra);
 
 /**
  * @brief Função que recebe um item e aplica uma operação qualquer sob ele sem modificação.
@@ -98,9 +98,10 @@ int listaTamanho(Lista lista);
  * @param to Lista genérica de destino dos itens de mapeamento.
  * @param mapFunc Ponteiro de função que aplica uma operação qualquer nos itens.
  * @param itemSize Tamanho em bytes de um item 'a ser armazenado na lista to.
+ * @param extra Ponteiro para um valor/estrutura qualquer usado para auxiliar o processamento da função mapFunc
  * @return Não há retorno de algum valor.
  */
-void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize);
+void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize, void* extra);
 
 /**
  * @brief Concatena duas listas.
@@ -130,7 +131,7 @@ void percorrerLista(Lista lista, runThroughItems runFunc, void* extra);
 bool isInLista(Lista lista, compararItens compFunc, Item item);
 
 /**
- * @brief Percorre a lista fornecida até o index do dado elemento.
+ * @brief Percorre a lista fornecida até o index do dado elemento de 0 ate' tam-1.
  * @param lista Lista genérica para percorrer.
  * @param index Inteiro usado para indicar a posição do item.
  * @return Retorna o item posicionado no index fornecido.

@@ -93,7 +93,7 @@ Info deleteNodeSTrp(STreap t, NodeST n);
   deve ser considerado invalido.
   Retorna a informacao que estava associada a tal no' (ou NULL, se nao encontrado).
 */
-Info removeSTrp(STreap t,double xa, double ya);
+Info removeSTrp(STreap t, double xa, double ya);
 
 /*
   "Desenha" (no formato dot) a arvore no arquivo nomeArq.
@@ -126,10 +126,13 @@ void percursoProfundidade(STreap t, FvisitaNo fVisita, void *aux);
 */
 void killSTrp(STreap t, freeFunc fFunc, void* extra);
 
+// DEBUG FUNCS
 ///////////////////////
 
 NodeST getStrpRoot(STreap t);
 
 int getAlturaStrp(STreap t);
+
+int getPrioridade(NodeST node);
 
 #endif

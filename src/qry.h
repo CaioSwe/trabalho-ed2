@@ -33,4 +33,6 @@ const char* getPercursoRapidoColor(Percurso percurso);
 
 const char* getPercursoCurtoColor(Percurso percurso);
 
+void freePercurso(Percurso percurso, freeFunc freeCaminhoFunc, void* extra);
+
 #endif

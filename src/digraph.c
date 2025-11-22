@@ -24,7 +24,7 @@ typedef struct EdgeStr{
     Info infoAresta;
 } EdgeStr;
 
-// Vertice e lista de ajdacencia dele.
+// Vertice e lista de adjacencia dele.
 typedef struct ListaAdj{
     Vert vertice;
     Lista listaEdges;
@@ -38,7 +38,8 @@ typedef struct GraphStr{
     int nEdge;
     
     Hash tabelaHash;
-    ListaAdj* listaAdj; // listaAdj[Node] -> (Ve'rtice, Lista de Edges)
+    ListaAdj* listaAdj; // listaAdj[Node] -> (Ve'rtice, Lista de EdgeStr* tal que from = Node)
+    Lista* listaEdgeInversa; // lista[Node] de EdgeStr* tal que to = Node
 } GraphStr;
 
 // Cria um novo grafo.
@@ -58,6 +59,14 @@ Graph createGraph(int nVert){
         free(g);
         return NULL;
     }
+
+    // Aloca espaco para a lista inversa de adjacencia.
+    g->listaEdgeInversa = (Lista*)malloc(nVert * sizeof(Lista));
+    if(checkAllocation(g->listaEdgeInversa, "Lista de adjacencia inversa.")){
+        free(g->listaAdj);
+        free(g);
+        return NULL;
+    }
     
     // Inicializa os campos do vertice na lista de adjacencia dele e sua lista.
     for(int i = 0; i < nVert; i++){
@@ -65,6 +74,7 @@ Graph createGraph(int nVert){
         g->listaAdj[i].vertice.nome = NULL;
 
         g->listaAdj[i].listaEdges = criaLista();
+        g->listaEdgeInversa[i] = criaLista();
     }
 
     // Cria a tabela hash para associacao de nome-valor
@@ -232,6 +242,7 @@ Edge addEdge(Graph g, Node from, Node to, Info info){
     edge->from = from;
 
     inserirFim(graph->listaAdj[from].listaEdges, edge);
+    inserirFim(graph->listaEdgeInversa[to], edge);
 
     graph->nEdge += 1;
 
@@ -267,7 +278,9 @@ static bool compararEdges(Item itemO, Item itemC){
     const EdgeStr* edgeItem = (const EdgeStr*)itemO;
     const EdgeStr* edgeComp = (const EdgeStr*)itemC;
 
-    return (edgeItem == edgeComp);
+    bool equals = edgeItem->from == edgeComp->from && edgeItem->to == edgeComp->to && edgeItem->infoAresta == edgeComp->infoAresta;
+
+    return equals;
 }
 
 Node getFromNode(Graph g, Edge e){
@@ -320,14 +333,11 @@ void removeEdge(Graph g, Edge e, freeFunc freeEdgeFunc){
     GraphStr* graph = (GraphStr*)g;
     EdgeStr* edge = (EdgeStr*)e;
 
-    Node from = getFromNode(g, e);
-
-    if(from < 0){
-        printf("\n - removeEdge() -> Node de origem nao encontrado para remocao da lista de adjacencia. -");
-        return;
-    }
+    Node from = edge->from;
+    Node to = edge->to;
 
     EdgeStr* edgeRem = remover(graph->listaAdj[from].listaEdges, compararEdges, edge);
+    remover(graph->listaEdgeInversa[to], compararEdges, edge);
 
     if(edgeRem != NULL){
         if(edgeRem->infoAresta != NULL && freeEdgeFunc != NULL) freeEdgeFunc(edgeRem->infoAresta, NULL);
@@ -353,7 +363,7 @@ bool isAdjacent(Graph g, Node from, Node to){
     return isInLista(graph->listaAdj[from].listaEdges, compararNodes, &to);
 }
 
-static void* mappingGetToNode(Item item){
+static void* mappingGetToNode(Item item, void* extra){
     EdgeStr* edge = (EdgeStr*)item;
     return &edge->to;
 }
@@ -373,7 +383,7 @@ void adjacentNodes(Graph g, Node node, Lista nosAdjacentes){
 
     if(nosAdjacentes == NULL) nosAdjacentes = criaLista();
 
-    mapTo(graph->listaAdj[node].listaEdges, nosAdjacentes, mappingGetToNode, sizeof(int));
+    mapTo(graph->listaAdj[node].listaEdges, nosAdjacentes, mappingGetToNode, sizeof(int), NULL);
 }
 
 void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes){
@@ -392,6 +402,24 @@ void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes){
     if(arestasAdjacentes == NULL) arestasAdjacentes = criaLista();
 
     copyLista(graph->listaAdj[node].listaEdges, arestasAdjacentes, sizeof(EdgeStr));
+}
+
+void adjacentEdgesReverse(Graph g, Node node, Lista arestasAdjacentes){
+    if(g == NULL){
+        printf("\n - adjacentEdgesReverse() -> Grafo passado e' nulo. -");
+        return;
+    }
+    
+    GraphStr* graph = (GraphStr*)g;
+
+    if(node < 0 || node >= graph->nVert){
+        printf("\n - adjacentEdgesReverse() -> Node fora dos limites do grafo. -");
+        return;
+    }
+
+    if(arestasAdjacentes == NULL) arestasAdjacentes = criaLista();
+
+    copyLista(graph->listaEdgeInversa[node], arestasAdjacentes, sizeof(EdgeStr));
 }
 
 void getNodeNames(Graph g, Lista nomesNodes){
@@ -851,7 +879,7 @@ double getDijkstraDistance(Caminho caminho){
     return djk->distanciaTotal;
 }
 
-void freeCaminho(Caminho caminho, freeFunc freeEdgeFunc){
+void freeCaminho(Caminho caminho){
     if(caminho == NULL){
         printf("\n - freeCaminho() -> caminho passado e' nulo. -");
         return;
@@ -859,6 +887,6 @@ void freeCaminho(Caminho caminho, freeFunc freeEdgeFunc){
 
     DijkstraStr* djk = (DijkstraStr*)caminho;
 
-    destroiLista(djk->arestas, freeAresta, freeEdgeFunc);
-    free(caminho);
+    destroiLista(djk->arestas, NULL, NULL);
+    free(djk);
 }
