@@ -63,6 +63,9 @@ const char* getQuadraCStrk(Quadra quadra);
 // Retorna a espessura da borda da quadra.
 const char* getQuadraSW(Quadra quadra);
 
+// Retorna a opacidade da quadra.
+double getQuadraOpacidade(Quadra quadra);
+
 // Retorna a quadra associada ao id fornecido.
 Quadra getQuadraByID(Quadras quadras, const char* id);
 
@@ -76,6 +79,9 @@ void setQuadraCFill(Quadra quadra, const char* cfill);
 
 // Define a cor de borda da quadra.
 void setQuadraCStrk(Quadra quadra, const char* cstrk);
+
+// Define a opacidade da quadra.
+void setQuadraOpacidade(Quadra quadra, double opacidade);
 
 // Remove a quadra especifica da estrutura Quadras.
 void removerQuadra(Quadras quadras, Quadra quadra);

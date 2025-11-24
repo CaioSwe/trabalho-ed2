@@ -206,14 +206,14 @@ int listaTamanho(Lista lista){
     return ((listaStr*)lista)->tamanho;
 }
 
-void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize, void* extra){
+void mapTo(Lista from, Lista to, mapFunction mapFunc, copyFunction copyFunc, void* extra){
     if(from == NULL || to == NULL){
         printf("\n - mapTo() -> Lista passada e' nula.");
         return;
     }
 
     if(mapFunc == NULL){
-        printf("\n - mapTo() -> Funcao de mapeamento nula. -");
+        printf("\n - mapTo() -> Funcao de mapeamento ou nula. -");
         return;
     }
 
@@ -231,11 +231,12 @@ void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize, void* ext
             continue;
         }
 
-        Item newItem = malloc(itemSize);
-        if(checkAllocation(newItem, "Item do mapeamento de listas.")) return;
-
-        memcpy(newItem, item, itemSize);
-        inserirFim(listaTo, newItem);
+        if(copyFunc == NULL) inserirFim(listaTo, item);
+        else{
+            Item newItem = copyFunc(item);
+            if(checkAllocation(newItem, "Funcao de copia retornou valor nulo.")) return;
+            inserirFim(listaTo, newItem);
+        }
 
         cel = cel->prox;
     }
@@ -384,7 +385,7 @@ void limparLista(Lista lista, freeFunc fFunc, void* extra){
     l->tamanho = 0;
 }
 
-void copyLista(Lista from, Lista to, size_t itemSize){
+void copyLista(Lista from, Lista to, copyFunction copyFunc){
     if(from == NULL || to == NULL){
         printf("\n - copyLista() -> Lista passada e' nula.");
         return;
@@ -398,10 +399,9 @@ void copyLista(Lista from, Lista to, size_t itemSize){
     Celula* atual = f->inicio;
 
     while (atual != NULL) {
-        void* newItem = malloc(itemSize);
-        if(checkAllocation(newItem, "Item de copia de listas.")) return;
+        Item newItem = copyFunc(atual->item);
+        if(checkAllocation(newItem, "Item de copia de listas retornou nulo.")) return;
 
-        memcpy(newItem, atual->item, itemSize);
         inserirFim(to, newItem);
 
         atual = atual->prox;

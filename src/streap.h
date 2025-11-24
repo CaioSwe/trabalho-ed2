@@ -4,27 +4,28 @@
 #include "lista.h"
 
 /*
-    Uma Treap espacial (STreap) e' uma arvore Treap que associa uma coordenada no plano (ancora)
-a uma dada informacao
+  Uma Treap espacial (STreap) e' uma arvore Treap que associa uma coordenada no plano (ancora)
+  a uma dada informacao
 
-    A chave de busca e´ a coordenada da ancora.
+  A chave de busca e´ a coordenada da ancora.
 
-    A ordem da chave de busca e' definido como, a seguir. Sejam ch1 e ch2 duas chaves de busca.
-Define-se que ch1 < ch2, se:
+  A ordem da chave de busca e' definido como, a seguir. Sejam ch1 e ch2 duas chaves de busca.
+  Define-se que ch1 < ch2, se:
 
-        * ch1.x < ch2.x    
-        OU
-        * ch1.x == ch2.x  AND ch1.y < ch2.y
+    * ch1.x < ch2.x    
+    OU
+    * ch1.x == ch2.x  AND ch1.y < ch2.y
 
   caso contrario, ch1 == ch2
 
-    Associa-se uma precisao epsilon `a arvore. Esta precisao e' usada para determinar quando dois numeros
-reais (da chave de busca) devem ser considerados como iguais. Assim v == w, se |v - w| <= epsilon.
+  Associa-se uma precisao epsilon `a arvore. Esta precisao e' usada para determinar quando dois numeros
+  reais (da chave de busca) devem ser considerados como iguais. Assim v == w, se |v - w| <= epsilon.
 
-    Algumas operacoes de busca retornam o no´ da arvore onde uma determinada informacao esta' armazenada. 
-Os dados referentes a este no´ podem ser obtidos por outras operacoes, desde que estes nos continuem
-validos. Qualquer remocao posterior faz com que nos (NodeST) retornados previamente devam ser considerados
-invalidos. 
+  Algumas operacoes de busca retornam o no´ da arvore onde uma determinada informacao esta' armazenada. 
+  
+  Os dados referentes a este no´ podem ser obtidos por outras operacoes, desde que estes nos continuem
+  validos. Qualquer remocao posterior faz com que nos (NodeST) retornados previamente devam ser considerados
+  invalidos. 
 */
 
 typedef void *STreap; 
@@ -99,7 +100,7 @@ Info removeSTrp(STreap t, double xa, double ya);
   "Desenha" (no formato dot) a arvore no arquivo nomeArq.
   Veja: https://graphviz.org/
 */
-void printSTrp(STreap t, char *nomeArq);
+void printSTrp(STreap t, const char *nomeArq);
 
 /*
   As proximas operacoes percorrem a arvore em largura/profundidade/simetrico.

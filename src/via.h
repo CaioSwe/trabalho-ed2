@@ -3,6 +3,14 @@
 
 #include "digraph.h"
 
+/**
+ * Cabeçalho dedicado ao processamento do arquivo .via, que tem como elementos:
+ * [v] Vértice de âncora (x, y) e um nome.
+ * [e] Aresta (u, v) tal que u e v são vértices, velocidade média (vm), comprimento (cmp), quadra à direita e esquerda, nome
+ * 
+ * O arquivo .via tem como objetivo montar um grafo direcionado com os elementos lidos, com arestas de peso vm e cmp.
+ */
+
 typedef void* VerticeVia;
 typedef void* ArestaVia;
 
@@ -32,6 +40,9 @@ double getVerticeViaX(VerticeVia vv);
 
 // Retorna o ponto Y do ve'rtice.
 double getVerticeViaY(VerticeVia vv);
+
+// Retorna o nome da aresta.
+const char* getArestaViaNome(ArestaVia av);
 
 // Retorna a velocidade me'dia da aresta.
 double getArestaVM(ArestaVia av);

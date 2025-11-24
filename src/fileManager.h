@@ -2,6 +2,13 @@
 #define __fileManagerH__
 
 #include <stdbool.h>
+#include <stdio.h>
+
+/**
+ * Cabeçalho dedicado às funções relacionadas a arquivos.
+ * Declarações de ponteiros de funções com assinatura padrão, mudança de extensão de uma String,
+ * concatenação de Strings, truncamento, etc.
+*/
 
 /**
  * @brief Funcao de liberacao de um item qualquer.
@@ -60,5 +67,13 @@ const char* strcatcat(const char* cat1, const char* cat2);
  * @return Retorna um valor booleano: True, caso houve um erro. False, caso contra'rio.
  */
 bool checkAllocation(void* var, const char* text);
+
+/**
+ * @brief Copia de um arquivo para o outro.
+ * @param to Arquivo de destino da co'pia aberto em modo de escrita.
+ * @param from Caminho do arquivo de origem.
+ * @return Nao ha' retorno de algum valor.
+ */
+void copyFile(FILE* to, const char* from);
 
 #endif

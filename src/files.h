@@ -3,13 +3,13 @@
 
 #include "geo.h"
 #include "lista.h"
-
 #include "digraph.h"
 
-typedef struct teste{
-    Graph g;
-    FILE* file;
-}teste;
+/**
+ * Cabeçalho dedicado às funções relacionadas a arquivos.
+ * Mais especificamente às funções que usam estruturas internas do programa,
+ * como Grafo e Quadras.
+*/
 
 /**
  * @brief Coloca a quadra especificada no arquivo file.
@@ -41,9 +41,5 @@ void printVerticeToSVG(Graph g, Node node, FILE* file, const char* color);
  * @return Não há retorno de algum valor.
  */
 void printEdgeToSVG(Graph g, Edge e, FILE* file, const char* color);
-
-// ADAPT: void printToTXT(const void* item, const void* file, const void* aux);
-
-// void printToTXT(Item item, void* extra);
 
 #endif

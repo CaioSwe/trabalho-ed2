@@ -25,7 +25,7 @@ float maxX = 0;
 float maxY = 0;
 
 void getMax(Quadra quadra, double x, double y, double mbbX1, double mbbY1, double mbbX2, double mbbY2, void* extra){
-    // Abusando um pouco da função de mudar extensão :)
+    // Abusando um pouco da função de mudar extensão :) (trunca SW [ex: 1.5] para [1])
     // A função atoi() converte uma string em um inteiro equivalente.
     float itemW = getQuadraX(quadra) + getQuadraWidth(quadra) + atoi(changeExtension(getQuadraSW(quadra), "")) + 1;
     float itemH = getQuadraY(quadra) + getQuadraHeight(quadra) + atoi(changeExtension(getQuadraSW(quadra), "")) + 1;
@@ -38,66 +38,8 @@ void printQuadraToSVGvoid(Info info, double x, double y, double mbbX1, double mb
     printQuadraToSVG(info, (FILE*)extra);
 }
 
-typedef struct ResourcesPrintEdge{
-    Graph g;
-    FILE* file;
-    const char* color;
-}ResourcesPrintEdge;
-
-void printEdgeToSVGvoid(Item item, void* extra){
-    ResourcesPrintEdge* res = (ResourcesPrintEdge*)extra;
-    printEdgeToSVG(res->g, item, res->file, res->color);
-}
-
-void freeCaminhoVoid(Item item, void* extra){
-    freeCaminho(item);
-}
-
-typedef struct ResourcesAnimation{
-    Graph grafo;
-    FILE* file;
-    double* vm;
-}ResourcesAnimation;
-
-void animateEdgeSVG(Item item, void* extra){
-    Edge e = (Edge)item;
-    ResourcesAnimation* res = (ResourcesAnimation*)extra;
-
-    Node f = getFromNode(NULL, e);
-    Node t = getToNode(NULL, e);
-
-    Info infoF = getNodeInfo(res->grafo, f);
-    Info infoT = getNodeInfo(res->grafo, t);
-
-    double x1 = getVerticeViaX(infoF);
-    double y1 = getVerticeViaY(infoF);
-
-    double x2 = getVerticeViaX(infoT);
-    double y2 = getVerticeViaY(infoT);
-
-    double vm = getArestaVM(getEdgeInfo(res->grafo, e));
-
-    *res->vm += vm;
-
-    fprintf(res->file, " %.1f,%.1f", x1, y1);
-    fprintf(res->file, " %.1f,%.1f", x2, y2);
-}
-
-void animatePercurso(Graph grafo, Lista listaEdges, const char* color, FILE* file){
-    static int pathID = 0;
-    double vm = 0;
-
-    fprintf(file, "\n<path id=\"path%d\" d=\"M", pathID);
-    percorrerLista(listaEdges, animateEdgeSVG, &(ResourcesAnimation){grafo, file, &vm});
-
-    fprintf(file, "\" fill=\"none\" stroke=\"%s\" stroke-width=\"2\"/>", color);
-    fprintf(file, "\n<circle r=\"10\" fill=\"%s\"><animateMotion dur=\"%.1fs\" repeatCount=\"indefinite\" rotate=\"auto\"><mpath href=\"#path%d\"/></animateMotion></circle>\n", color, vm, pathID);
-
-    pathID += 1;
-}
-
 int main(int argc, char* argv[]){
-    // Geracao de prioridade aleatoria.
+    // Geracao de prioridade aleatoria da STreap.
     srand((unsigned)time(NULL));
 
     char* flags[5] = {"-e", "-o", "-f", "-q", "-v"};
@@ -121,7 +63,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    // Caso a entrada não for especificado, usa o diretório atual
+    // Caso a entrada não for especificada, usa o diretório atual
     if(paths[ENTRADA] == NULL){
         free(paths[ENTRADA]);
         paths[ENTRADA] = (char*)malloc(sizeof(char) * (strlen("./") + 1));
@@ -150,6 +92,17 @@ int main(int argc, char* argv[]){
         strcat(paths[ENTRADA], "/");
     }
 
+    // Coloca '/' caso não tenha no final do path de saida
+    if(paths[SAIDA][strlen(paths[SAIDA]) - 1] != '/'){
+        paths[SAIDA] = realloc(paths[SAIDA], strlen(paths[SAIDA]) + 2);
+        if(checkAllocation(paths[SAIDA], "Realloc da string do caminho de saida.")){
+            for(int i = 1; i < 5; i++) free(paths[i]);
+            free(paths);
+            return 1;
+        }
+        strcat(paths[SAIDA], "/");
+    }
+
     printf("\n\n");
 
     // Coloca ".geo" no arquivo geo caso não tenha
@@ -174,53 +127,27 @@ int main(int argc, char* argv[]){
     // (2) Lendo o arquivo .geo
     ////////////////////////////////////////
 
-    // Concatena o path de entrada e o nome do arquivo GEO para fEntradaPath
+    // Concatena o path de entrada e o nome do arquivo GEO para fEntradaPath.
     const char* fEntradaPath = strcatcat(paths[ENTRADA], paths[GEO]);
 
+    // Guarda as informações do geo em um ponteiro para a memoria das quadras.
     Quadras formas = processGeoFile(fEntradaPath);
 
     // (2.1) Lendo o arquivo .via (se tiver)
-    /////////////////////////////////////////////////////////////////
-
-    Lista vertices = NULL;
-    Lista arestas = NULL;
+    ////////////////////////////////////////////////
 
     Graph grafo = NULL;
 
     if(paths[VIA]){
-        // Concatena o path de entrada e o nome do arquivo VIA para fViaPAth
+        // Concatena o path de entrada e o nome do arquivo VIA para fViaPath.
         const char* fViaPath = strcatcat(paths[ENTRADA], paths[VIA]);
         
         // Guarda as informações do arquivo .via em um grafo direcionado.
         grafo = processViaFile(fViaPath);
-        
-        // Inicializa uma lista dos vertices do grafo G para visualização no SVG (opcional)
-        vertices = criaLista();
-        getAllVerticesInfo(grafo, vertices);
-
-        arestas = criaLista();
-        getEdges(grafo, arestas);
-
-        // (2.1.1) OPCIONAL: Escreve a lista de adjacência de G em um TXT [v -> e]
-        /////////////////////////////////////////
-
-        // Concatena o diretório de saída com o nome do arquivo .via em formato .txt
-        const char* fOutputViaPath = strcatcat(paths[SAIDA], changeExtension(paths[VIA], ".txt"));
-
-        // Abre o diretório em modo de escrita
-        FILE* fViaSaida = fopen(fOutputViaPath, "w");
-        printf("\nEscrevendo no arquivo: %s", fOutputViaPath);
-
-        // ARRUMAR PARA: bfs ou dfs -> percorrerGrafoRel(grafo, printToTXT, fViaSaida);
-
-        fclose(fViaSaida);
-
-        free((char*)fViaPath);
-        free((char*)fOutputViaPath);
     }
 
     // (2.2) Abre um arquivo .svg e coloca as formas adiquiridas do arquivo .geo
-    /////////////////////////////////////////
+    ////////////////////////////////////////////////
 
     // Concatena o diretório de saída com o nome do arquivo .geo em formato .svg
     const char* fOutputPath = strcatcat(paths[SAIDA], changeExtension(paths[GEO], ".svg"));
@@ -233,90 +160,55 @@ int main(int argc, char* argv[]){
 
     fprintf(fSaida, "<svg viewBox=\"-39.0 -39.0 %.1f %.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX * 1.2f, maxY * 1.2f);
     percorrerQuadras(formas, printQuadraToSVGvoid, fSaida);
-    
-        // (2.2.1) OPCIONAL: Visualizacao do grafo no SVG.
-        // Tire de comenta'rio caso queria visualizar os vertices do grafo no SVG produzido pelo arquivo .via
-        /////////////////////////////////////////
-
-        // percorrerLista(arestas, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, "#ff2222ff"});
-        // percorrerLista(vertices, printVerticeToSVG, fSaida);
-
-        /////////////////////////////////////////
 
     fprintf(fSaida, "</svg>");
 
     fclose(fSaida);
 
     // (3) Lendo o arquivo .qry (se tiver)
-    ////////////////////////////////////////
-
-    printf("\n QRY: \n");
-
+    ////////////////////////////////////////////////
     if(paths[QUERY]){
         // Concatena o path de entrada e o nome do arquivo QRY para fEntradaPath
         const char* fEntradaPathQry = strcatcat(paths[ENTRADA], paths[QUERY]);
 
-        Percurso percurso = processQryFile(grafo, formas, fEntradaPathQry);
+        // Concatena o diretório de saída com o nome do arquivo .geo + .qry em formato .txt
+        const char* fOutputPathQryTxt = strcatcat(changeExtension(fOutputPath, "-"), changeExtension(paths[QUERY], ".txt"));
 
-        if(percurso == NULL){
-            freePercurso(percurso, freeCaminhoVoid, NULL);
-            freeQuadras(formas, NULL);
-            for(int i = 1; i < 5; i++) free(paths[i]);
-            free(paths);
-            printf("\nPrograma finalizado com sucesso!\n");
-            return 0;
-        }
+        // Reproduz o caminho do .txt e converte para .svg
+        const char* fOutputPathQry = changeExtension(fOutputPathQryTxt, ".svg");
 
-        Caminho rapido = getCaminhoCurto(percurso);
-        Caminho curto = getCaminhoRapido(percurso);
-        
-        Lista listaRapido = getDijkstraList(rapido);
-        Lista listaCurto = getDijkstraList(curto);
-
-        // (3.1) Abre um arquivo .svg e coloca o percurso adiquirido do arquivo .qry
-        /////////////////////////////////////////
-
-        // Concatena o diretório de saída com o nome do arquivo .geo + .qry em formato .svg
-        const char* fOutputPathQry = strcatcat(changeExtension(fOutputPath, "-"), changeExtension(paths[QUERY], ".svg"));
-        
-        // Abre o diretório em modo de escrita
+        // Abre o caminho do output .svg em modo de escrita
         fSaida = fopen(fOutputPathQry, "w");
         printf("\nEscrevendo no arquivo: %s\n", fOutputPathQry);
-
         fprintf(fSaida, "<svg viewBox=\"-39.0 -39.0 %.1f %.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX * 1.2f, maxY * 1.2f);
-        percorrerQuadras(formas, printQuadraToSVGvoid, fSaida);
 
-        Lista arestas2 = criaLista();
-        getEdges(grafo, arestas2);
-
-        // Printar todas as arestas
-        // percorrerLista(arestas2, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, "#ff2222ff"});
-
-        // Printar o caminho rapido
-        // percorrerLista(listaRapido, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, getPercursoRapidoColor(percurso)});
-        animatePercurso(grafo, listaRapido, getPercursoRapidoColor(percurso), fSaida);
-
-        // Printar o caminho curto;
-        // percorrerLista(listaCurto, printEdgeToSVGvoid, &(ResourcesPrintEdge){grafo, fSaida, getPercursoCurtoColor(percurso)});
-        animatePercurso(grafo, listaCurto, getPercursoCurtoColor(percurso), fSaida);
-
-        freePercurso(percurso, freeCaminhoVoid, NULL);
-
+        processQryFile(grafo, formas, fEntradaPathQry, fSaida, fOutputPathQryTxt);
+        
         fprintf(fSaida, "</svg>");
         fclose(fSaida);
     }
 
-    printf("\n END QRY \n");
-
+    // (3.1) Coloca as quadras no arquivo .dot
     ////////////////////////////////////////////////
-    // SECAO DE LIBERACAO DE MEMORIA
 
-    freeQuadras(formas, NULL);
+    // Se o .qry existir, faz o caminho de saida .qry em .dot / caso contrário, usa a saída do .geo em .dot
+    const char* fSaidaDot = paths[QUERY] ? strcatcat(changeExtension(fOutputPath, "-"), changeExtension(paths[QUERY], ".dot")) : changeExtension(fOutputPath, ".dot");
+    printSTrp(getQuadrasSTrp(formas), fSaidaDot);
 
+    // (4) SECAO DE LIBERACAO DE MEMORIA
+    ////////////////////////////////////////////////
+
+    // Paths
     for(int i = 1; i < 5; i++) free(paths[i]);
     free(paths);
     
-    printf("\nPrograma finalizado com sucesso!\n");
+    // Geo
+    freeQuadras(formas, NULL);
+    
+    // Via
+    if(grafo != NULL) killDG(grafo, freeReg, freeArestaVia);
+    
+    printf("\nProcessamento finalizado!\n");
 
     return 0;
 }

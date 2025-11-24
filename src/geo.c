@@ -14,6 +14,7 @@ typedef struct QuadraStr{
     char* sw;
     char* cfill;
     char* cstrk;
+    double opacidade;
 } QuadraStr;
 
 typedef struct QuadrasStr{
@@ -113,6 +114,8 @@ Quadras processGeoFile(const char* path){
             }
             strcpy(quadra->sw, sw);
 
+            quadra->opacidade = 1.0f;
+
             inserirHash(quadras->tabelaHash, quadra->id, quadra);
             insertSTrp(quadras->streap, quadra->x, quadra->y, quadra);
             quadras->nQuadras += 1;
@@ -178,6 +181,10 @@ const char* getQuadraSW(Quadra quadra){
     return ((QuadraStr*)quadra)->sw;
 }
 
+double getQuadraOpacidade(Quadra quadra){
+    return ((QuadraStr*)quadra)->opacidade;
+}
+
 Quadra getQuadraByID(Quadras quadras, const char* id){
     QuadrasStr* qs = (QuadrasStr*)quadras;
     return getHashValue(qs->tabelaHash, id);
@@ -188,9 +195,10 @@ typedef struct ResourcesQuadraRegion{
 }ResourcesQuadraRegion;
 
 static Item convertNodeToQuadra(Item item, void* extra){
+    //QuadraStr* quadra = (QuadraStr*)item;
     QuadraStr* quadra = getInfoSTrp(NULL, item, NULL, NULL, NULL, NULL, NULL, NULL);
     ResourcesQuadraRegion* res = (ResourcesQuadraRegion*)extra;
-
+    
     bool inside = isInside(res->x, res->y, res->w, res->h, quadra->x, quadra->y, quadra->width, quadra->height);
 
     return (inside ? quadra : NULL);
@@ -200,7 +208,7 @@ void getQuadrasRegion(Quadras quadras, double x, double y, double w, double h, L
     Lista nodeSTs = criaLista();
     getNodeRegiaoSTrp(((QuadrasStr*)quadras)->streap, x, y, w, h, nodeSTs);
 
-    mapTo(nodeSTs, resultado, convertNodeToQuadra, sizeof(QuadraStr), &(ResourcesQuadraRegion){x, y, w, h});
+    mapTo(nodeSTs, resultado, convertNodeToQuadra, NULL, &(ResourcesQuadraRegion){x, y, w, h});
 }
 
 // FUNCOES SET
@@ -225,6 +233,11 @@ void setQuadraCStrk(Quadra quadra, const char* cstrk){
     strcpy(q->cstrk, cstrk);
 }
 
+void setQuadraOpacidade(Quadra quadra, double opacidade){
+    QuadraStr* q = (QuadraStr*)quadra;
+    q->opacidade = opacidade;
+}
+
 void removerQuadra(Quadras quadras, Quadra quadra){
     if(quadras == NULL || quadra == NULL){
         printf("\n - removerQuadra() -> Quadras ou quadra passada e' nula. - ");
@@ -235,10 +248,10 @@ void removerQuadra(Quadras quadras, Quadra quadra){
     QuadraStr* q = (QuadraStr*)quadra;
 
     NodeST nodest = getNodeSTrp(qs->streap, q->x, q->y);
-    deleteNodeSTrp(qs->streap, nodest);
-    QuadraStr* quadraRem = removeHashValue(qs->tabelaHash, q->id);
+    if(nodest) deleteNodeSTrp(qs->streap, nodest);
+    // QuadraStr* quadraRem = removeHashValue(qs->tabelaHash, q->id);
 
-    freeQuadra(quadraRem, NULL);
+    // if(quadraRem) freeQuadra(quadraRem, NULL);
 }
 
 static void freeQuadra(Quadra quadra, void* extra){

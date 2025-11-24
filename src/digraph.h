@@ -153,11 +153,7 @@ void getEdges(Graph g, Lista arestas);
 */
 void getAllVerticesInfo(Graph g, Lista allInfo);
 
-/*
-    As pro'ximas funcoes percorrem o grafo em profundidade e largura, respectivamente.
-    Ambas as funcoes utilizam funcoes de callback com escopo especificadas no inicio do cabecalho.
-*/
-
+// PERCURSO DO GRAFO
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -173,8 +169,6 @@ bool dfs(Graph g, Node node, procEdge treeEdge, procEdge forwardEdge, procEdge r
     para a aresta (x,y) usada para "descobrir" o y.
 */
 bool bfs(Graph g, Node node, procEdge discoverNode, void *extra);
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
 
 // DIJKSTRA
 /////////////////////////////////////////////////////////////////////////////////////////////////

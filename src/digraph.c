@@ -368,6 +368,27 @@ static void* mappingGetToNode(Item item, void* extra){
     return &edge->to;
 }
 
+static Item copyNode(Item item){
+    int* newNode = (int*)malloc(sizeof(int));
+    if(checkAllocation(newNode, "Copia de node.")){
+        return NULL;
+    }
+
+    return newNode;
+}
+
+static Item copyEdge(Item item){
+    EdgeStr* edge = (EdgeStr*)item;
+
+    EdgeStr* newEdge = (EdgeStr*)malloc(sizeof(EdgeStr));
+
+    newEdge->from = edge->from;
+    newEdge->infoAresta = edge->infoAresta;
+    newEdge->to = edge->to;
+
+    return newEdge;
+}
+
 void adjacentNodes(Graph g, Node node, Lista nosAdjacentes){
     if(g == NULL){
         printf("\n - adjacentNodes() -> Grafo passado e' nulo. -");
@@ -383,7 +404,7 @@ void adjacentNodes(Graph g, Node node, Lista nosAdjacentes){
 
     if(nosAdjacentes == NULL) nosAdjacentes = criaLista();
 
-    mapTo(graph->listaAdj[node].listaEdges, nosAdjacentes, mappingGetToNode, sizeof(int), NULL);
+    mapTo(graph->listaAdj[node].listaEdges, nosAdjacentes, mappingGetToNode, copyNode, NULL);
 }
 
 void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes){
@@ -401,7 +422,7 @@ void adjacentEdges(Graph g, Node node, Lista arestasAdjacentes){
 
     if(arestasAdjacentes == NULL) arestasAdjacentes = criaLista();
 
-    copyLista(graph->listaAdj[node].listaEdges, arestasAdjacentes, sizeof(EdgeStr));
+    copyLista(graph->listaAdj[node].listaEdges, arestasAdjacentes, copyEdge);
 }
 
 void adjacentEdgesReverse(Graph g, Node node, Lista arestasAdjacentes){
@@ -419,7 +440,7 @@ void adjacentEdgesReverse(Graph g, Node node, Lista arestasAdjacentes){
 
     if(arestasAdjacentes == NULL) arestasAdjacentes = criaLista();
 
-    copyLista(graph->listaEdgeInversa[node], arestasAdjacentes, sizeof(EdgeStr));
+    copyLista(graph->listaEdgeInversa[node], arestasAdjacentes, copyEdge);
 }
 
 void getNodeNames(Graph g, Lista nomesNodes){
@@ -721,6 +742,10 @@ static void relaxEdge(Item item, void* extra){
     Node v = e->to;
     double dist = func(e, NULL);
 
+    if(dist < 0){
+        return;
+    }
+
     if(res->processados[v] == false && res->distancias[v] > res->distancias[u] + dist){
         res->distancias[v] = res->distancias[u] + dist;
         res->predecessores[v] = u;
@@ -816,10 +841,10 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getNumberFun
     }
 
     destroiPriorityQueue(filaDeProcessamento, freeReg, NULL);
-
+    
     // Impossivel de chegar ao destino.
     if(predecessores[to] == -1){
-        printf("\n - getShortesPath() -> Caminho impossivel de alcancar. -");
+        // printf("\n - getShortestPath() -> Caminho impossivel de alcancar. -");
 
         free(distancias);
         free(predecessores);
@@ -848,7 +873,7 @@ Caminho getShortestPath(Graph g, Node from, Node to, getNumberValue getNumberFun
 
     dStr->distanciaTotal = distancias[to];
 
-    printf("\n Caminho adiquirido com sucesso. (%d -> %d)", from, to);
+    // printf("\n Caminho adiquirido com sucesso.");
 
     free(distancias);
     free(predecessores);

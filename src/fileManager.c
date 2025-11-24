@@ -89,3 +89,12 @@ bool checkAllocation(void* var, const char* text){
     }
     return false;
 }
+
+void copyFile(FILE* to, const char* from){
+    FILE* fromF = fopen(from, "r");
+
+    char linha[1028];
+    while(fgets(linha, 256, fromF) != NULL) fprintf(to, "%s", linha);
+    
+    fclose(fromF);
+}

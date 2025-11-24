@@ -1,9 +1,0 @@
-OS COMMAND:
-    WINDOWS:
-        mingw32-make
-
-    LINUX:
-        make
-
-PATHING (GLOBAL):
-    ./ted -e ../in -o ../ -f c1.geo -v c1-v.via

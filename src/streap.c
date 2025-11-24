@@ -327,7 +327,7 @@ Info getInfoSTrp(STreap t, NodeST n, double *x, double *y, double *mbbX1, double
 }
 
 static NodeST getNodeSTrpRec(NodeStr* node, double x, double y, double epsilon){
-    if(node == NULL) return node->pai;
+    if(node == NULL) return NULL;
     
     if((x < node->x) || ((fabs(x - node->x) <= epsilon) && (y < node->y))){
         return getNodeSTrpRec(node->esq, x, y, epsilon);
@@ -355,22 +355,72 @@ typedef struct ResourcesClosestNode{
     double y;
 }ResourcesClosestNode;
 
+static double distance_sq_to_mbb(double xa, double ya, BoundingBox* box) {
+    double dx = 0.0;
+    double dy = 0.0;
+    
+    if(xa < box->x1) dx = box->x1 - xa;
+    else if(xa > box->x2) dx = xa - box->x2;
+
+    if(ya < box->y1) dy = box->y1 - ya;
+    else if(ya > box->y2) dy = ya - box->y2;
+    
+    double distancia = dx*dx + dy*dy;
+    return distancia;
+}
+
+// Helper function to calculate squared distance between two points (from your existing code)
 static double distance(double x1, double y1, double x2, double y2){
     double dx = x1 - x2;
     double dy = y1 - y2;
 
-    return dx*dx + dy*dy;
+    double distancia = dx*dx + dy*dy;
+    return distancia;
+}
+
+static void getClosestNodeSTrpRec(NodeStr* node, void* extra) {
+    if(node == NULL) return;
+    ResourcesClosestNode* res = (ResourcesClosestNode*)extra;
+
+    double distanciaAtual = distance(res->x, res->y, node->x, node->y);
+    if(distanciaAtual < res->bestDistance) {
+        res->bestDistance = distanciaAtual;
+        res->closest = node;
+    }
+    
+    NodeStr* esq = node->esq;
+    NodeStr* dir = node->dir;
+    
+    double distEsq = DBL_MAX;
+    if(esq != NULL) distEsq = distance_sq_to_mbb(res->x, res->y, esq->box);
+    
+    double distDir = DBL_MAX;
+    if(dir != NULL) distDir = distance_sq_to_mbb(res->x, res->y, dir->box);
+
+    if (distEsq < distDir) {
+        esq = node->esq;
+        dir = node->dir;
+    } else {
+        esq = node->dir;
+        dir = node->esq;
+        distEsq = distDir;
+        distDir = distEsq;
+    }
+    
+    if(esq != NULL && distEsq <= res->bestDistance) getClosestNodeSTrpRec(esq, res);
+    if(dir != NULL && distance_sq_to_mbb(res->x, res->y, dir->box) <= res->bestDistance) getClosestNodeSTrpRec(dir, res);
 }
 
 NodeST getClosestNodeSTrp(STreap t, double xa, double ya){
     STreapStr* st = (STreapStr*)t;
     
-    if(st == NULL) return NULL;
+    if (st == NULL || st->raiz == NULL) return NULL;
 
-    //Lista resultado = criaLista();
-    NodeStr* closest = getNodeSTrpRec(st->raiz, xa, ya, st->epsilon);
+    ResourcesClosestNode res = {NULL, DBL_MAX, xa, ya};
 
-    return closest;
+    getClosestNodeSTrpRec(st->raiz, &res);
+
+    return res.closest;
 }
 
 void updateInfoSTrp(STreap t, NodeST n, Info i){
@@ -435,25 +485,33 @@ Info removeSTrp(STreap t, double xa, double ya){
     return deleteNodeSTrp(t, node);
 }
 
-static void exportDot(NodeStr* node, FILE* f){
-    if(!node) return;
+static void exportDot(NodeStr* node, FILE* f) {
+    if (node == NULL) return;
 
-    if(node->esq){
-        fprintf(f, "\"(%.1f, %.1f)\" -> \"(%.1f, %.1f)\";\n", node->x, node->y, node->esq->x, node->esq->y);
+    fprintf(f, "\"%p\" [shape=record, label=\"{QUADRA| {PONTEIRO | %p} | {X | %.1f} | {Y | %.1f} | {BOUNDING BOX | [%.1f, %.1f, %.1f, %.1f]} }\"];\n",node, node, node->x, node->y, node->box->x1, node->box->y1, node->box->x2, node->box->y2);
+
+    if(node->esq != NULL){
+        fprintf(f, "\"%p\" -> \"%p\";\n", node, node->esq);
         exportDot(node->esq, f);
     }
-    if(node->dir){
-        fprintf(f, "\"(%.1f, %.1f)\" -> \"(%.1f, %.1f)\";\n", node->x, node->y, node->dir->x, node->dir->y);
+
+    if(node->dir != NULL){
+        fprintf(f, "\"%p\" -> \"%p\";\n", node, node->dir);
         exportDot(node->dir, f);
     }
 }
 
-void printSTrp(STreap t, char *nomeArq){
+void printSTrp(STreap t, const char *nomeArq){
     STreapStr* st = (STreapStr*)t;
     FILE *f = fopen(nomeArq, "w");
 
-    fprintf(f, "digraph STreap{\n");
+    fprintf(f, "digraph G{\n");
+    fprintf(f, "rankdir=TB;\n");
+    fprintf(f, "fontname=\"Helvetica\";\n");
+    fprintf(f, "node [shape=plaintext, fontname=\"Helvetica\"];\n");
+
     exportDot(st->raiz, f);
+    
     fprintf(f, "}\n");
 
     fclose(f);

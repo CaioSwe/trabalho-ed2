@@ -9,6 +9,7 @@ typedef struct VerticeViaStr{
 }VerticeViaStr;
 
 typedef struct ArestaViaStr{
+    char* nome;
     char* ldir;
     char* lesq;
 
@@ -87,8 +88,17 @@ Graph processViaFile(const char* path){
                 return NULL;
             }
 
+            via->nome = (char*)malloc(sizeof(char) * strlen(nome) + 1);
+            if(checkAllocation(via->nome, "Nome da aresta-via.")){
+                free(via);
+                killDG(g, freeReg, freeArestaVia);
+                return NULL;
+            }
+            strcpy(via->nome, nome);
+
             via->ldir = (char*)malloc(sizeof(char) * strlen(ldir) + 1);
             if(checkAllocation(via->ldir, "Lado direito da aresta-via.")){
+                free(via->nome);
                 free(via);
                 killDG(g, freeReg, freeArestaVia);
                 return NULL;
@@ -97,6 +107,7 @@ Graph processViaFile(const char* path){
 
             via->lesq = (char*)malloc(sizeof(char) * strlen(lesq) + 1);
             if(checkAllocation(via->lesq, "Lado esquerdo da aresta-via.")){
+                free(via->nome);
                 free(via->ldir);
                 free(via);
                 killDG(g, freeReg, freeArestaVia);
@@ -151,6 +162,10 @@ double getVerticeViaX(VerticeVia vv){
 
 double getVerticeViaY(VerticeVia vv){
     return ((VerticeViaStr*)vv)->y;
+}
+
+const char* getArestaViaNome(ArestaVia av){
+    return ((ArestaViaStr*)av)->nome;
 }
 
 double getArestaVM(ArestaVia av){

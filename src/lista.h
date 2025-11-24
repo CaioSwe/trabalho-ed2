@@ -7,8 +7,8 @@
 #include "fileManager.h"
 
 /**
- * Cabeçalho dedicado à estrura "Lista" que têm como princípio
- * a inserção e remoção de qualquer elemento em qualquer posição
+ * Cabeçalho dedicado 'a estrura "Lista" que tem como princi'pio
+ * a insercao e remocao de qualquer elemento em qualquer posicao
  * dentro da estrutura.
 */
 
@@ -24,13 +24,19 @@ typedef void* Item;
 typedef Item (*mapFunction)(Item item, void* extra);
 
 /**
- * @brief Função que recebe um item e aplica uma operação qualquer sob ele sem modificação.
- * @return Não há retorno de algum valor.
+ * @brief Função de co'pia de um item passado para co'pia de listas.
+ * @return Retorna o endereço de memo'ria da co'pia criada pela função.
+ */
+typedef Item (*copyFunction)(Item item);
+
+/**
+ * @brief Funcao que recebe um item e aplica uma operacao qualquer sob ele sem modificacao.
+ * @return Nao ha' retorno de algum valor.
  */
 typedef void (*runThroughItems)(Item item, void* extra);
 
 /**
- * @brief Cria uma lista genérica.
+ * @brief Cria uma lista gene'rica.
  * @return Retorna a lista criada caso houve sucesso na criação, NULL caso contrário.
  */
 Lista criaLista();
@@ -97,11 +103,11 @@ int listaTamanho(Lista lista);
  * @param from Lista genérica da origem dos itens de mapeamento.
  * @param to Lista genérica de destino dos itens de mapeamento.
  * @param mapFunc Ponteiro de função que aplica uma operação qualquer nos itens.
- * @param itemSize Tamanho em bytes de um item 'a ser armazenado na lista to.
+ * @param copyFunc Ponteiro de função que retorna uma co'pia do item a ser inserido na nova lista, caso seja nulo, compartilha a memo'ria entre as listas.
  * @param extra Ponteiro para um valor/estrutura qualquer usado para auxiliar o processamento da função mapFunc
  * @return Não há retorno de algum valor.
  */
-void mapTo(Lista from, Lista to, mapFunction mapFunc, size_t itemSize, void* extra);
+void mapTo(Lista from, Lista to, mapFunction mapFunc, copyFunction copyFunc, void* extra);
 
 /**
  * @brief Concatena duas listas.
@@ -163,10 +169,10 @@ void limparLista(Lista lista, freeFunc fFunc, void* extra);
  * AVISO: RECOMENDADO LIMPAR A LISTA 'TO' ANTES DE COPIAR!
  * @param from Lista gene'rica para cópia dos itens.
  * @param to Lista genérica para destino das co'pias da lista from.
- * @param itemSize Tamanho em bytes dos itens da lista from.
+ * @param copyFunc Ponteiro de função que retorna uma co'pia do item a ser inserido na nova lista.
  * @return Nao ha' retorno de algum valor.
  */
-void copyLista(Lista from, Lista to, size_t itemSize);
+void copyLista(Lista from, Lista to, copyFunction copyFunc);
 
 /**
  * @brief Destroi a lista passada.
