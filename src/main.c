@@ -171,8 +171,16 @@ int main(int argc, char* argv[]){
         // Concatena o path de entrada e o nome do arquivo QRY para fEntradaPath
         const char* fEntradaPathQry = strcatcat(paths[ENTRADA], paths[QUERY]);
 
+        // Acha as ocorrencias de '/' no caminho query e substitui com '-'
+        for(int i = 0; paths[QUERY][i] != '\0'; i++){
+            if(paths[QUERY][i] == '/'){
+                paths[QUERY][i] = '-';
+                break;
+            }
+        }
+
         // Concatena o diretório de saída com o nome do arquivo .geo + .qry em formato .txt
-        const char* fOutputPathQryTxt = strcatcat(changeExtension(fOutputPath, "-"), changeExtension(paths[QUERY], ".txt"));
+        const char* fOutputPathQryTxt = changeExtension(strcatcat(paths[SAIDA], paths[QUERY]), ".txt");
 
         // Reproduz o caminho do .txt e converte para .svg
         const char* fOutputPathQry = changeExtension(fOutputPathQryTxt, ".svg");
