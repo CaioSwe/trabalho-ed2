@@ -6,9 +6,6 @@
 #include <float.h>
 #include <time.h>
 
-#include <graphviz/gvc.h>
-#include <graphviz/cgraph.h>
-
 #include "geo.h"
 
 /*
