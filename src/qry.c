@@ -270,7 +270,7 @@ static bool aumentarVmArestas(Graph g, Edge e, int td, int tf, void* extra){
 // Funcao para pegar a velocidade media de uma aresta na lista (Dijkstra).
 double getArestaVMVoid(Edge e, void* extra){
     Info edgeInfo = getEdgeInfo(NULL, e);
-    return isArestaEnabled(edgeInfo) ? getArestaVM(edgeInfo) : -1.0;
+    return isArestaEnabled(edgeInfo) ? (getArestaCMP(edgeInfo) * getArestaVM(edgeInfo)) : -1.0;
 }
 
 // Funcao para pegar o comprimento de uma aresta na lista (Dijkstra).
