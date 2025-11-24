@@ -6,13 +6,7 @@
 #include <float.h>
 #include <time.h>
 
-#include "geo.h"
-
-/*
-    TERMINAR
-*/
-
-// Verificar condicao de insercao 'a direita.
+#include "geo.h".
 
 typedef struct BoundingBox{
     double x1, y1;
