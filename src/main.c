@@ -156,13 +156,15 @@ int main(int argc, char* argv[]){
     FILE* fSaida = fopen(fOutputPath, "w");
     printf("\nEscrevendo no arquivo: %s\n", fOutputPath);
 
+    // Percore todas as quadras para encontrar o maior X e Y (Dimensoes do SVG).
     percorrerQuadras(formas, getMax, NULL);
 
+    // Abre e fecha o cabecalho do SVG, iterando sob as quadras.
     fprintf(fSaida, "<svg viewBox=\"-39.0 -39.0 %.1f %.1f\" xmlns=\"http://www.w3.org/2000/svg\">\n", maxX * 1.2f, maxY * 1.2f);
     percorrerQuadras(formas, printQuadraToSVGvoid, fSaida);
-
     fprintf(fSaida, "</svg>");
 
+    // Fecha o diretório
     fclose(fSaida);
 
     // (3) Lendo o arquivo .qry (se tiver)
